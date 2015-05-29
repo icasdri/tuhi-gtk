@@ -55,3 +55,4 @@ target/
 
 # Dynamic import hack (for IDE)
 gi/
+gi
