@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tuhi Notes
+Comment=Simple self-hosted synchronized notes
+Categories=GTK;Utilities;Notes;
+Keywords=tuhi;notes
+Exec=tuhi
+Icon=notes
+Terminal=false
+Type=Application
