@@ -19,6 +19,6 @@ setup(
     data_files=[('/usr/share/applications', ['distributing/tuhi.desktop'])],
     packages=find_packages(),
     entry_points={
-        'gui_scripts': ['tuhi = tuhi-gtk.main:main'],
+        'gui_scripts': ['tuhi = tuhi_gtk.main:main'],
     }
 )
