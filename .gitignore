@@ -53,6 +53,9 @@ docs/_build/
 # PyBuilder
 target/
 
+# IDE ignores
+.idea/
+
 # Dynamic import hack (for IDE)
 gi/
 gi
