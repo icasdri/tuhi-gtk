@@ -1,11 +1,11 @@
 
-class Line():
+class Line:
     pass
 
 
-class Note():
+class Note:
     pass
 
 
-class User():
+class User:
     pass
