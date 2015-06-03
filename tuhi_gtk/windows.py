@@ -25,13 +25,15 @@ class MainWindow(Gtk.Window):
         self._scrolled_list = Gtk.ScrolledWindow()
         self._scrolled_list.add(self.list)
         self._scrolled_list.set_size_request(200, 50)
+        self._scrolled_list.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         import random
         for s in [
             "Test Note", "My little pony", "Canes Chicken",
             "Test Note 2", "Random Crap", "Welcome to Tuhi",
             "More Stuff", "Cool things!", "Blah blah blah",
-            "Untitled", "Some cool note",
+            "Untitled", "Some cool note", "My not-so-little pony",
+            "More and more stuff", "Hello world", "The language",
             "Blah blah blah blah blah blah blah blah blah"
                 ]:
             x = NoteRow(s)
@@ -46,10 +48,9 @@ class MainWindow(Gtk.Window):
                 return callback
 
             # if s == "Random Crap" or s.startswith("Blah"):
-            # GObject.timeout_add(2000, gen_callback(x))
+            GObject.timeout_add(2000, gen_callback(x))
             x.spinner_start()
             self.list.add(x)
-        # x.spinner_stop()
 
         self.main_paned.pack1(self._scrolled_list, resize=False, shrink=False)
 
@@ -68,37 +69,28 @@ class NoteRow(Gtk.ListBoxRow):
         self.label.set_halign(Gtk.Align.START)
         self.label.set_margin_start(MARGIN)
         self.label.set_justify(Gtk.Justification.LEFT)
+        # Label Viewport (Using Layout)
+        self._label_viewport = Gtk.Layout()
+        self._label_viewport.set_vscroll_policy(Gtk.ScrollablePolicy.MINIMUM)
+        self._label_viewport.set_size_request(-1, 26)
+        self._label_viewport.put(self.label, 0, 3)
         # Spinner
         self.spinner = Gtk.Spinner()
         self.spinner.set_halign(Gtk.Align.START)
         self.spinner_status = False
         # Container
-        self._overlay = Gtk.Overlay()
-        self._overlay.add(self.label)
-        self._overlay.add_overlay(self.spinner)
-        self._overlay.connect('get-child-position', self._get_spinner_pos)
-        # self._box = Gtk.Box()
-        # self._box.pack_end(self.label, expand=True, fill=True, padding=MARGIN)
-        self.add(self._overlay)
-
-    def _get_spinner_pos(self, overlay, widget, huh):
-        r = Gdk.Rectangle()
-        # r.x = 0
-        # r.y = 0
-        r.width = self.spinner.get_preferred_width()[1]
-        r.height = self.spinner.get_preferred_height()[1]
-        return (False, r)
+        self._box = Gtk.Box()
+        self._box.pack_start(self._label_viewport, expand=True, fill=True, padding=8)
+        self.add(self._box)
 
     def spinner_start(self):
         if self.spinner_status is False:
             self.spinner.start()
-            # self._box.pack_start(self.spinner, expand=False, fill=False, padding=MARGIN)
+            self._box.pack_end(self.spinner, expand=False, fill=False, padding=12)
             self.spinner_status = True
-        # self.label.set_text("    " + self.s)
 
     def spinner_stop(self):
         if self.spinner_status is True:
             self.spinner.stop()
-            # self._box.remove(self.spinner)
+            self._box.remove(self.spinner)
             self.spinner_status = False
-            # self.label.set_text(self.s)
