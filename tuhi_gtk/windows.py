@@ -1,6 +1,7 @@
 from gi.repository import Gtk, GtkSource
 
 TITLE = "Tuhi"
+MARGIN = 4
 
 class MainWindow(Gtk.Window):
     def __init__(self):
@@ -14,14 +15,16 @@ class MainWindow(Gtk.Window):
         self.set_titlebar(self.hb)
 
         # Main Layout
-        # self.grid = Gtk.Table(1, 4, True)
-        # self.add(self.grid)
-        self.main_box = Gtk.Box()
-        self.add(self.main_box)
+        self.main_paned = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+        self.add(self.main_paned)
 
         self.list = Gtk.ListBox()
-        self.list.set_size_request(20, 20)
+        self.list.set_size_request(200, 200)
         self.list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+
+        self._scrolled_list = Gtk.ScrolledWindow()
+        self._scrolled_list.add(self.list)
+        self._scrolled_list.set_size_request(200, 50)
 
         for s in [
             "Test Note", "My little pony", "Canes Chicken",
@@ -29,17 +32,21 @@ class MainWindow(Gtk.Window):
                 ]:
             self.list.add(NoteRow(s))
 
-        # self.grid.attach(self.list, 0, 1, 0, 1)
-        self.main_box.pack_start(self.list, expand=False, fill=True, padding=2)
+        self.main_paned.pack1(self._scrolled_list, resize=False, shrink=True)
 
         self.source_view = GtkSource.View()
-        # self.grid.attach(self.source_view, 1, 4, 0, 1)
-        self.main_box.pack_end(self.source_view, expand=True, fill=True, padding=0)
+        self._scrolled_source_view = Gtk.ScrolledWindow()
+        self._scrolled_source_view.add(self.source_view)
+        self.main_paned.pack2(self._scrolled_source_view, resize=True, shrink=True)
 
 
 class NoteRow(Gtk.ListBoxRow):
     def __init__(self, s):
         Gtk.ListBoxRow.__init__(self)
         self.s = s
-        self.label = Gtk.Label(s)
+        self.label = Gtk.Label.new(s)
+        # self.label.set_alignment()
+        self.label.set_halign(Gtk.Align.START)
+        self.label.set_margin_start(MARGIN)
+        self.label.set_justify(Gtk.Justification.LEFT)
         self.add(self.label)
