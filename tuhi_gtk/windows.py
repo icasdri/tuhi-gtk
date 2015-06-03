@@ -1,4 +1,4 @@
-from gi.repository import Gtk, GtkSource, GObject
+from gi.repository import Gtk, GtkSource, GObject, Gdk
 
 TITLE = "Tuhi"
 MARGIN = 4
@@ -46,7 +46,7 @@ class MainWindow(Gtk.Window):
                 return callback
 
             # if s == "Random Crap" or s.startswith("Blah"):
-            GObject.timeout_add(2000, gen_callback(x))
+            # GObject.timeout_add(2000, gen_callback(x))
             x.spinner_start()
             self.list.add(x)
         # x.spinner_stop()
@@ -73,23 +73,32 @@ class NoteRow(Gtk.ListBoxRow):
         self.spinner.set_halign(Gtk.Align.START)
         self.spinner_status = False
         # Container
-        # self._overlay = Gtk.Overlay()
-        # self._overlay.add(self.label)
-        # self._overlay.add_overlay(self.spinner)
-        self._box = Gtk.Box()
-        self._box.pack_end(self.label, expand=True, fill=True, padding=MARGIN)
-        self.add(self._box)
+        self._overlay = Gtk.Overlay()
+        self._overlay.add(self.label)
+        self._overlay.add_overlay(self.spinner)
+        self._overlay.connect('get-child-position', self._get_spinner_pos)
+        # self._box = Gtk.Box()
+        # self._box.pack_end(self.label, expand=True, fill=True, padding=MARGIN)
+        self.add(self._overlay)
+
+    def _get_spinner_pos(self, overlay, widget, huh):
+        r = Gdk.Rectangle()
+        # r.x = 0
+        # r.y = 0
+        r.width = self.spinner.get_preferred_width()[1]
+        r.height = self.spinner.get_preferred_height()[1]
+        return (False, r)
 
     def spinner_start(self):
         if self.spinner_status is False:
             self.spinner.start()
-            self._box.pack_start(self.spinner, expand=False, fill=False, padding=MARGIN)
+            # self._box.pack_start(self.spinner, expand=False, fill=False, padding=MARGIN)
             self.spinner_status = True
         # self.label.set_text("    " + self.s)
 
     def spinner_stop(self):
         if self.spinner_status is True:
             self.spinner.stop()
-            self._box.remove(self.spinner)
+            # self._box.remove(self.spinner)
             self.spinner_status = False
             # self.label.set_text(self.s)
