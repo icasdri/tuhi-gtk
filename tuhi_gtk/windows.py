@@ -32,7 +32,7 @@ class MainWindow(Gtk.Window):
                 ]:
             self.list.add(NoteRow(s))
 
-        self.main_paned.pack1(self._scrolled_list, resize=False, shrink=True)
+        self.main_paned.pack1(self._scrolled_list, resize=False, shrink=False)
 
         self.source_view = GtkSource.View()
         self._scrolled_source_view = Gtk.ScrolledWindow()
@@ -45,7 +45,6 @@ class NoteRow(Gtk.ListBoxRow):
         Gtk.ListBoxRow.__init__(self)
         self.s = s
         self.label = Gtk.Label.new(s)
-        # self.label.set_alignment()
         self.label.set_halign(Gtk.Align.START)
         self.label.set_margin_start(MARGIN)
         self.label.set_justify(Gtk.Justification.LEFT)
