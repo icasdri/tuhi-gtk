@@ -7,26 +7,44 @@ class MainWindow(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self, title=TITLE)
         self.set_default_size(850, 600)
+        self._init_headerbar()
+        self._init_mainlayout()
+        self._testing_only_noterow_stubs(test_spinners=True)
 
+    def _init_headerbar(self):
         # Header Bar
         self.hb = Gtk.HeaderBar()
         self.hb.set_show_close_button(True)
         self.hb.props.title = TITLE
         self.set_titlebar(self.hb)
 
+    def _init_mainlayout(self):
         # Main Layout
         self.main_paned = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
         self.add(self.main_paned)
 
+        # Note List
         self.list = Gtk.ListBox()
         self.list.set_size_request(200, 200)
         self.list.set_selection_mode(Gtk.SelectionMode.SINGLE)
-
+        # ScrolledWindow around Note List
         self._scrolled_list = Gtk.ScrolledWindow()
         self._scrolled_list.add(self.list)
         self._scrolled_list.set_size_request(200, 50)
         self._scrolled_list.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        # Add Note List to Main Layout
+        self.main_paned.pack1(self._scrolled_list, resize=False, shrink=False)
 
+        # SourceView
+        self.source_view = GtkSource.View()
+        # ScrolledWindow around SourceView
+        self._scrolled_source_view = Gtk.ScrolledWindow()
+        self._scrolled_source_view.add(self.source_view)
+        # Add SourceView to Main Layout
+        self.main_paned.pack2(self._scrolled_source_view, resize=True, shrink=True)
+
+    # TODO: TESTING ONLY: Some NoteRow stubs for UI lnf testing before real logic
+    def _testing_only_noterow_stubs(self, test_spinners=False):
         import random
         for s in [
             "Test Note", "My little pony", "Canes Chicken",
@@ -35,29 +53,23 @@ class MainWindow(Gtk.Window):
             "Untitled", "Some cool note", "My not-so-little pony",
             "More and more stuff", "Hello world", "The language",
             "Blah blah blah blah blah blah blah blah blah"
-                ]:
+        ]:
             x = NoteRow(s)
-
-            def gen_callback(note_row):
-                def callback():
-                    if random.choice((True, False, False)):
-                        note_row.spinner_start()
-                    else:
-                        note_row.spinner_stop()
-                    return True
-                return callback
-
-            # if s == "Random Crap" or s.startswith("Blah"):
-            GObject.timeout_add(2000, gen_callback(x))
-            x.spinner_start()
             self.list.add(x)
 
-        self.main_paned.pack1(self._scrolled_list, resize=False, shrink=False)
+            if test_spinners:
+                def gen_callback(note_row):
+                    def callback():
+                        if random.choice((True, False, False)):
+                            note_row.spinner_start()
+                        else:
+                            note_row.spinner_stop()
+                        return True
+                    return callback
 
-        self.source_view = GtkSource.View()
-        self._scrolled_source_view = Gtk.ScrolledWindow()
-        self._scrolled_source_view.add(self.source_view)
-        self.main_paned.pack2(self._scrolled_source_view, resize=True, shrink=True)
+                # if s == "Random Crap" or s.startswith("Blah"):
+                GObject.timeout_add(2000, gen_callback(x))
+                x.spinner_start()
 
 
 class NoteRow(Gtk.ListBoxRow):
