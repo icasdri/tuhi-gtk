@@ -10,59 +10,49 @@ class MainWindow(Gtk.Window):
         self.set_default_size(850, 600)
         self._init_headerbar()
         self._init_mainlayout()
-        self._init_sizegroups()
-        self._testing_only_noterow_stubs(test_spinners=False)
+        self._testing_only(test_spinners=False, test_searchbar=True)
 
     def _init_headerbar(self):
-        # Header Bar
+        # Side Header Bar
         self.side_hb = Gtk.HeaderBar()
         self.side_hb.set_show_close_button(False)
+        # Main Header Bar
         self.main_hb = Gtk.HeaderBar()
         self.main_hb.set_show_close_button(True)
         self.main_hb.props.title = TITLE
-
-        self.side_hb.pack_end(Gtk.Button("S"))
-        self.main_hb.pack_start(Gtk.Button("M"))
+        # Put them together in the title bar with a Gtk.Box
         self._title_bar = Gtk.Box()
-        # self._title_bar.add(self.side_hb)
-        # self._title_bar.add(self.main_hb)
-        # self._title_bar = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
-        # self._title_bar.pack1(self.side_hb)
-        # self._title_bar.pack2(self.main_hb)
-        self._title_bar.pack_start(self.side_hb, expand=False, fill=False, padding=0)
-        self._title_bar.pack_start(Gtk.Separator.new(Gtk.Orientation.VERTICAL), expand=False, fill=False, padding=1)
-        self._title_bar.pack_end(self.main_hb, expand=True, fill=True, padding=0)
+        self._title_bar.pack_start(self.side_hb, expand=True, fill=True, padding=0)
+        self._title_bar.pack_start(Gtk.Separator.new(Gtk.Orientation.VERTICAL), expand=False, fill=False, padding=0)
+        self._title_bar.pack_end(self.main_hb, expand=False, fill=False, padding=0)
         self.set_titlebar(self._title_bar)
 
     def _init_mainlayout(self):
         # Main Layout Pane
         self.main_paned = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
         self.add(self.main_paned)
-        self.main_paned.connect("move-handle", lambda p, s: print("Hi"))
 
         # Note List
         self.list = Gtk.ListBox()
-        self.list.set_size_request(200, 200)
+        self.list.set_size_request(220, 200)
         self.list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         # ScrolledWindow around Note List
         self._scrolled_list = Gtk.ScrolledWindow()
         self._scrolled_list.add(self.list)
-        self._scrolled_list.set_size_request(210, 50)
+        self._scrolled_list.set_size_request(220, 50)
         self._scrolled_list.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
-        # Add Note List to Main Layout
         # Search Bar
-        self.side_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
         self.search_bar = Gtk.SearchBar()
         self.search_entry = Gtk.SearchEntry()
         self.search_bar.add(self.search_entry)
+
+        # Pack List and SearchBar into a Box to add to Main Layout
+        self.side_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
         self.side_box.pack_start(self.search_bar, expand=False, fill=False, padding=0)
         self.side_box.pack_end(self._scrolled_list, expand=True, fill=True, padding=0)
         self.main_paned.pack1(self.side_box, resize=False, shrink=False)
-        self.search_bar.set_search_mode(True)
-        # self.main_paned.pack1(self._scrolled_list, resize=False, shrink=False)
 
-        self.side_box.connect("size-allocate", self.synchronize_sizes)
 
         # SourceView
         self.source_view = GtkSource.View()
@@ -72,17 +62,24 @@ class MainWindow(Gtk.Window):
         # Add SourceView to Main Layout
         self.main_paned.pack2(self._scrolled_source_view, resize=True, shrink=True)
 
-    def _init_sizegroups(self):
-        # side_sizegroup = Gtk.SizeGroup.new(Gtk.SizeGroupMode.HORIZONTAL)
-        # side_sizegroup.add_widget(self.side_hb)
-        # side_sizegroup.add_widget(self._scrolled_list)
-        # main_sizegroup = Gtk.SizeGroup.new(Gtk.SizeGroupMode.HORIZONTAL)
-        # main_sizegroup.add_widget(self.main_hb)
-        # main_sizegroup.add_widget(self._scrolled_source_view)
-        pass
+        # Headerbar size synchronization (SizeGroups don't auto update)
+        self._scrolled_source_view.connect("size-allocate", self.synchronize_sizes_callback)
+        # self.side_box.connect("size-allocate", self.synchronize_sizes_callback)
+        # self.synchronize_sizes_callback(self.side_box, self.side_box.get_allocation())
+
+    def synchronize_sizes_callback(self, side_box_widgit, allocation):
+        # self.side_hb.set_size_request(allocation.width, -1)
+        print(allocation.width)
+        self.main_hb.set_size_request(allocation.width, -1)
+        # TODO: TESTING ONLY: Debug size allocation print statements
+        print(self.side_box.get_allocation().width, self.side_hb.get_allocation().width)
+        # print(self.side_box.get_allocation().width, self.side_hb.get_allocation().width)
 
     # TODO: TESTING ONLY: Some NoteRow stubs for UI lnf testing before real logic
-    def _testing_only_noterow_stubs(self, test_spinners=False):
+    def _testing_only(self, test_spinners=False, test_searchbar=False):
+        self.side_hb.pack_end(Gtk.Button("S"))
+        self.main_hb.pack_start(Gtk.Button("M"))
+
         import random
         for s in [
             "Test Note", "My little pony", "Canes Chicken",
@@ -108,10 +105,8 @@ class MainWindow(Gtk.Window):
                 # if s == "Random Crap" or s.startswith("Blah"):
                 GObject.timeout_add(2000, gen_callback(x))
                 x.spinner_start()
-
-    def synchronize_sizes(self, side_box_widgit, allocation):
-        print(allocation.width)
-        self.side_hb.set_size_request(allocation.width-2, -1)
+        if test_searchbar:
+            self.search_bar.set_search_mode(True)
 
 
 class NoteRow(Gtk.ListBoxRow):
