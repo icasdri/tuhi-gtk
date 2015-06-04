@@ -2,7 +2,6 @@ from gi.repository import Gtk, GtkSource, GObject, Gdk
 
 TITLE = "Tuhi"
 MARGIN = 4
-G = 0
 
 class MainWindow(Gtk.Window):
     def __init__(self):
@@ -62,9 +61,7 @@ class MainWindow(Gtk.Window):
         self.main_paned.pack2(self._scrolled_source_view, resize=True, shrink=True)
 
         # Headerbar size synchronization (SizeGroups don't auto update)
-        # self._scrolled_source_view.connect("size-allocate", self.synchronize_sizes_callback)
         self.side_box.connect("size-allocate", self.synchronize_sizes_callback)
-        # self.synchronize_sizes_callback(self.side_box, self.side_box.get_allocation())
 
     def synchronize_sizes_callback(self, side_box_widget, allocation, last_width=[0]):
         if allocation.width != last_width[0]:
@@ -101,7 +98,6 @@ class MainWindow(Gtk.Window):
                         return True
                     return callback
 
-                # if s == "Random Crap" or s.startswith("Blah"):
                 GObject.timeout_add(2000, gen_callback(x))
                 x.spinner_start()
         if test_searchbar:
