@@ -22,9 +22,9 @@ class MainWindow(Gtk.Window):
         self.main_hb.props.title = TITLE
         # Put them together in the title bar with a Gtk.Box
         self._title_bar = Gtk.Box()
-        self._title_bar.pack_start(self.side_hb, expand=True, fill=True, padding=0)
+        self._title_bar.pack_start(self.side_hb, expand=False, fill=False, padding=0)
         self._title_bar.pack_start(Gtk.Separator.new(Gtk.Orientation.VERTICAL), expand=False, fill=False, padding=0)
-        self._title_bar.pack_end(self.main_hb, expand=False, fill=False, padding=0)
+        self._title_bar.pack_end(self.main_hb, expand=True, fill=True, padding=0)
         self.set_titlebar(self._title_bar)
 
     def _init_mainlayout(self):
@@ -53,7 +53,6 @@ class MainWindow(Gtk.Window):
         self.side_box.pack_end(self._scrolled_list, expand=True, fill=True, padding=0)
         self.main_paned.pack1(self.side_box, resize=False, shrink=False)
 
-
         # SourceView
         self.source_view = GtkSource.View()
         # ScrolledWindow around SourceView
@@ -63,17 +62,17 @@ class MainWindow(Gtk.Window):
         self.main_paned.pack2(self._scrolled_source_view, resize=True, shrink=True)
 
         # Headerbar size synchronization (SizeGroups don't auto update)
-        self._scrolled_source_view.connect("size-allocate", self.synchronize_sizes_callback)
-        # self.side_box.connect("size-allocate", self.synchronize_sizes_callback)
+        # self._scrolled_source_view.connect("size-allocate", self.synchronize_sizes_callback)
+        self.side_box.connect("size-allocate", self.synchronize_sizes_callback)
         # self.synchronize_sizes_callback(self.side_box, self.side_box.get_allocation())
 
-    def synchronize_sizes_callback(self, side_box_widgit, allocation):
-        # self.side_hb.set_size_request(allocation.width, -1)
-        print(allocation.width)
-        self.main_hb.set_size_request(allocation.width, -1)
-        # TODO: TESTING ONLY: Debug size allocation print statements
-        print(self.side_box.get_allocation().width, self.side_hb.get_allocation().width)
-        # print(self.side_box.get_allocation().width, self.side_hb.get_allocation().width)
+    def synchronize_sizes_callback(self, side_box_widget, allocation, last_width=[0]):
+        if allocation.width != last_width[0]:
+            self.side_hb.set_size_request(allocation.width+2, -1)
+            last_width[0] = allocation.width
+            # TODO: TESTING ONLY: Debug size allocation print statements
+            print(allocation.width)
+            print(self.side_box.get_allocation().width, self.side_hb.get_allocation().width)
 
     # TODO: TESTING ONLY: Some NoteRow stubs for UI lnf testing before real logic
     def _testing_only(self, test_spinners=False, test_searchbar=False):
