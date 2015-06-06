@@ -9,7 +9,6 @@ class Handlers:
         self.side_hb = builder.get_object("side_hb")
         self.search_bar = builder.get_object("search_bar")
         self.list = builder.get_object("list")
-        print(builder.get_objects())
         self._hb_synced_width = 0
 
     def synchronize_hb_size_callback(self, widget, allocation):
@@ -30,14 +29,11 @@ def get_window():
     notes_db.init_global_instance("test", "test")
     GObject.type_register(GtkSource.View)
     GObject.type_register(note_row_view.NoteRow)
-    print(GObject.type_name(note_row_view.NoteRow))
     builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
     builder.connect_signals(Handlers(builder))
     from tuhi_gtk.note_row_old_testing import _testing_only_list_elements
     _testing_only_list_elements(builder.get_object("list"), test_spinners=True)
     window = builder.get_object("main_window")
-    print(window.__gtype__)
-    print(dir(window.__gtype__))
     window.connect("delete-event", Gtk.main_quit)
     return window
 
