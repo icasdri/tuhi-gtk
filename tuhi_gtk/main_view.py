@@ -1,6 +1,7 @@
 from gi.repository import Gtk, GObject, GtkSource
 from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file
+from tuhi_gtk import notes_db
 
 class Handlers:
     def __init__(self, builder):
@@ -26,6 +27,7 @@ class Handlers:
 
 
 def get_window():
+    notes_db.init_global_instance("test", "test")
     GObject.type_register(GtkSource.View)
     GObject.type_register(note_row_view.NoteRow)
     print(GObject.type_name(note_row_view.NoteRow))

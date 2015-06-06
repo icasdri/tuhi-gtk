@@ -20,4 +20,11 @@ class NotesDB:
     def get_note(self, note_id):
         return self.notes[note_id]
 
-db = NotesDB("", "")
+def db():
+    return global_instance
+
+def init_global_instance(*args, **kwargs):
+    global global_instance
+    global_instance = NotesDB(*args, **kwargs)
+
+global_instance = None
