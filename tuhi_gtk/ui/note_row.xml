@@ -1,0 +1,31 @@
+<interface>
+    <object class="tuhi_gtk+note_row_view+NoteRow" id="note_row">
+        <child>
+            <object class="GtkBox" id="box">
+                <child>
+                    <object class="GtkLayout">
+                        <property name="vscroll-policy">minimum</property>
+                        <property name="height-request">26</property>
+                        <child>
+                            <object class="GtkLabel" id="label">
+                                <property name="halign">start</property>
+                                <property name="margin-start">12</property>
+                                <property name="justify">left</property>
+                            </object>
+                            <packing>
+                                <property name="y">3</property>
+                            </packing>
+                        </child>
+                    </object>
+                    <packing>
+                        <property name="expand">true</property>
+                        <property name="fill">true</property>
+                    </packing>
+                </child>
+            </object>
+        </child>
+    </object>
+    <object class="GtkSpinner" id="spinner">
+
+    </object>
+</interface>

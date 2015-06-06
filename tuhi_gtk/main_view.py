@@ -1,4 +1,5 @@
 from gi.repository import Gtk, GObject, GtkSource
+from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file
 
 class Handlers:
@@ -26,11 +27,15 @@ class Handlers:
 
 def get_window():
     GObject.type_register(GtkSource.View)
+    GObject.type_register(note_row_view.NoteRow)
+    print(GObject.type_name(note_row_view.NoteRow))
     builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
     builder.connect_signals(Handlers(builder))
-    from tuhi_gtk.windows import _testing_only_list_elements
+    from tuhi_gtk.note_row_old_testing import _testing_only_list_elements
     _testing_only_list_elements(builder.get_object("list"), test_spinners=True)
     window = builder.get_object("main_window")
+    print(window.__gtype__)
+    print(dir(window.__gtype__))
     window.connect("delete-event", Gtk.main_quit)
     return window
 
