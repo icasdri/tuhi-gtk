@@ -1,7 +1,14 @@
-from gi.repository import Gtk, GtkSource, GObject, Gdk
+from gi.repository import Gtk, GtkSource, GObject, Gdk, Gio
 
 TITLE = "Tuhi"
 MARGIN = 4
+
+def get_icon_button(icon_name, button_class=Gtk.Button):
+    icon = Gio.ThemedIcon(name=icon_name)
+    image = Gtk.Image.new_from_gicon(icon, Gtk.IconSize.BUTTON)
+    button = button_class()
+    button.add(image)
+
 
 class MainWindow(Gtk.Window):
     def __init__(self):
@@ -71,11 +78,8 @@ class MainWindow(Gtk.Window):
             print(allocation.width)
             print(self.side_box.get_allocation().width, self.side_hb.get_allocation().width)
 
-    # TODO: TESTING ONLY: Some NoteRow stubs for UI lnf testing before real logic
-    def _testing_only(self, test_spinners=False, test_searchbar=False):
-        self.side_hb.pack_end(Gtk.Button("S"))
-        self.main_hb.pack_start(Gtk.Button("M"))
-
+# TODO: TESTING ONLY: Some NoteRow stubs for UI lnf testing before real logic
+def _testing_only_list_elements(list_, test_spinners=False):
         import random
         for s in [
             "Test Note", "My little pony", "Canes Chicken",
@@ -86,7 +90,7 @@ class MainWindow(Gtk.Window):
             "Blah blah blah blah blah blah blah blah blah"
         ]:
             x = NoteRow(s)
-            self.list.add(x)
+            list_.add(x)
 
             if test_spinners:
                 def gen_callback(note_row):
@@ -100,9 +104,6 @@ class MainWindow(Gtk.Window):
 
                 GObject.timeout_add(2000, gen_callback(x))
                 x.spinner_start()
-        if test_searchbar:
-            self.search_bar.set_search_mode(True)
-
 
 class NoteRow(Gtk.ListBoxRow):
     def __init__(self, s):
@@ -126,6 +127,8 @@ class NoteRow(Gtk.ListBoxRow):
         self._box = Gtk.Box()
         self._box.pack_start(self._label_viewport, expand=True, fill=True, padding=8)
         self.add(self._box)
+
+        # self.set_size_request(-1, 35)
 
     def spinner_start(self):
         if self.spinner_status is False:
