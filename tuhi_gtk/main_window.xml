@@ -111,15 +111,41 @@
             <object class="GtkPaned" id="main_paned">
                 <property name="orientation">horizontal</property>
                 <child>
-                    <object class="GtkScrolledWindow" id="_scrolled_list">
-                        <property name="hscrollbar-policy">never</property>
-                        <property name="vscrollbar-policy">automatic</property>
-                        <property name="width-request">266</property>
-                        <!--<property name="width-request">220</property>-->
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <signal name="size-allocate" handler="synchronize_hb_size_callback"/>
                         <child>
-                            <object class="GtkListBox" id="list">
-                                <property name="selection-mode">single</property>
+                            <object class="GtkSearchBar" id="search_bar">
+                                <!--<property name="search-mode-enabled">true</property>-->
+                                <child>
+                                    <object class="GtkSearchEntry" id="search_entry">
+
+                                    </object>
+                                </child>
                             </object>
+                            <packing>
+                                <property name="pack-type">start</property>
+                                <property name="expand">false</property>
+                                <property name="fill">false</property>
+                            </packing>
+                        </child>
+                        <child>
+                            <object class="GtkScrolledWindow" id="_scrolled_list">
+                                <property name="hscrollbar-policy">never</property>
+                                <property name="vscrollbar-policy">automatic</property>
+                                <property name="width-request">266</property>
+                                <!--<property name="width-request">220</property>-->
+                                <child>
+                                    <object class="GtkListBox" id="list">
+                                        <property name="selection-mode">single</property>
+                                    </object>
+                                </child>
+                            </object>
+                            <packing>
+                                <property name="pack-type">end</property>
+                                <property name="expand">true</property>
+                                <property name="fill">true</property>
+                            </packing>
                         </child>
                     </object>
                     <packing>
