@@ -1,0 +1,111 @@
+<interface>
+    <object class="GtkImage" id="icon_new_note">
+        <!--<property name="icon_name">document-new-symbolic</property>-->
+        <property name="icon_name">edit-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_sync_notes">
+        <property name="icon_name">emblem-synchronizing-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_search">
+        <property name="icon_name">system-search-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_note_props">
+        <property name="icon_name">edit-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_delete_note">
+        <property name="icon_name">user-trash-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_menu">
+        <property name="icon_name">open-menu-symbolic</property>
+    </object>
+    <object class="GtkWindow" id="main_window">
+        <property name="default-width">970</property>
+        <property name="default-height">680</property>
+        <!--<property name="default-width">850</property>-->
+        <!--<property name="default-height">600</property>-->
+        <child type="titlebar">
+            <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <child>
+                    <object class="GtkHeaderBar" id="side_hb">
+                        <child>
+                            <object class="GtkButton">
+                                <property name="image">icon_sync_notes</property>
+                            </object>
+                            <packing>
+                                <property name="pack-type">start</property>
+                            </packing>
+                        </child>
+                        <child>
+                            <object class="GtkToggleButton">
+                                <property name="image">icon_search</property>
+                                <signal name="toggled" handler="toggle_search"/>
+                            </object>
+                            <packing>
+                                <property name="pack-type">end</property>
+                            </packing>
+                        </child>
+                        <!--<child>-->
+                        <!--<object class="GtkButton">-->
+                        <!--<property name="image">icon_sync_notes</property>-->
+                        <!--</object>-->
+                        <!--<packing>-->
+                        <!--<property name="pack-type">start</property>-->
+                        <!--</packing>-->
+                        <!--</child>-->
+                    </object>
+                    <packing>
+                        <property name="pack-type">start</property>
+                        <property name="expand">false</property>
+                        <property name="fill">false</property>
+                    </packing>
+                </child>
+                <child>
+                    <object class="GtkSeparator">
+                        <property name="orientation">vertical</property>
+                    </object>
+                    <packing>
+                        <property name="pack-type">start</property>
+                        <property name="expand">false</property>
+                        <property name="fill">false</property>
+                    </packing>
+                </child>
+                <child>
+                    <object class="GtkHeaderBar" id="main_hb">
+                        <property name="title">Tuhi</property>
+                        <property name="show-close-button">true</property>
+                        <child>
+                            <object class="GtkButton">
+                                <property name="image">icon_note_props</property>
+                            </object>
+                            <packing>
+                                <property name="pack-type">start</property>
+                            </packing>
+                        </child>
+                        <child>
+                            <object class="GtkButton">
+                                <property name="image">icon_menu</property>
+                            </object>
+                            <packing>
+                                <property name="pack-type">end</property>
+                            </packing>
+                        </child>
+                        <child>
+                            <object class="GtkButton">
+                                <property name="image">icon_delete_note</property>
+                            </object>
+                            <packing>
+                                <property name="pack-type">end</property>
+                            </packing>
+                        </child>
+                    </object>
+                    <packing>
+                        <property name="pack-type">end</property>
+                        <property name="expand">true</property>
+                        <property name="fill">true</property>
+                    </packing>
+                </child>
+            </object>
+        </child>
+    </object>
+</interface>
