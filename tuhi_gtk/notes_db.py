@@ -15,10 +15,26 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-class Note:
-    def __init__(self, title=None):
-        self.title = title
-        self.data = ""
+from sqlalchemy import Column, DateTime, String, Integer, ForeignKey
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
+
+class NoteContent(Base):
+    __tablename__ = 'content'
+    id = Column(String, primary_key=True)
+    data = Column(String, nullable=False)
+
+
+class Note(Base):
+    __tablename__ = 'note'
+    id = Column(String, primary_key=True)
+    title = Column(String)  # Dynamically set from NoteContent's first line, cached here
+    content = Column(String, ForeignKey('content.id'))
+    # def __init__(self, title=None):
+    #     self.title = title
+    #     self.data = ""
 
 
 class NotesDB:

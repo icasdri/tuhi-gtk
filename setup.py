@@ -16,6 +16,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3'
     ],
+    requires=['sqlalchemy'],
     data_files=[('/usr/share/applications', ['distributing/tuhi.desktop'])],
     packages=find_packages(),
     entry_points={
