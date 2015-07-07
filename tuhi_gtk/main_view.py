@@ -25,6 +25,7 @@ class Handlers:
         self.builder = builder
         self.side_hb = builder.get_object("side_hb")
         self.search_bar = builder.get_object("search_bar")
+        self.search_button = builder.get_object("search_button")
         self.list = builder.get_object("list")
         self._hb_synced_width = 0
 
@@ -40,6 +41,9 @@ class Handlers:
 
     def toggle_search(self, toggle_button):
         self.search_bar.set_search_mode(toggle_button.get_active())
+
+    def stop_search(self, search_entry):
+        self.search_button.set_active(False)
 
 
 def get_window():

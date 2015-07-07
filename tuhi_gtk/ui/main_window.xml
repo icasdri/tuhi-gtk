@@ -48,6 +48,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <property name="orientation">horizontal</property>
                 <child>
                     <object class="GtkHeaderBar" id="side_hb">
+                        <property name="title">Tuhi</property>
                         <child>
                             <object class="GtkButton">
                                 <property name="image">icon_sync_notes</property>
@@ -57,7 +58,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                             </packing>
                         </child>
                         <child>
-                            <object class="GtkToggleButton">
+                            <object class="GtkToggleButton" id="search_button">
                                 <property name="image">icon_search</property>
                                 <signal name="toggled" handler="toggle_search"/>
                             </object>
@@ -92,7 +93,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 </child>
                 <child>
                     <object class="GtkHeaderBar" id="main_hb">
-                        <property name="title">Tuhi</property>
+                        <!--<property name="title">Tuhi</property>-->
                         <property name="show-close-button">true</property>
                         <child>
                             <object class="GtkButton">
@@ -139,7 +140,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                 <!--<property name="search-mode-enabled">true</property>-->
                                 <child>
                                     <object class="GtkSearchEntry" id="search_entry">
-
+                                        <signal name="stop-search" handler="stop_search"/>
                                     </object>
                                 </child>
                             </object>
