@@ -32,9 +32,9 @@ class Note(Base):
     id = Column(String, primary_key=True)
     title = Column(String)  # Dynamically set from NoteContent's first line, cached here
     content = Column(String, ForeignKey('content.id'))
-    # def __init__(self, title=None):
-    #     self.title = title
-    #     self.data = ""
+    def __init__(self, title=None):
+        self.title = title
+        self.data = ""
 
 
 class NotesDB:
