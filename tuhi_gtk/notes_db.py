@@ -15,27 +15,41 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, DateTime, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import create_engine, Column, CHAR, String, Text, Boolean, Integer, ForeignKey
+from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+
+engine = create_engine('sqlite:///../test.db', convert_unicode=True)
+db_session = scoped_session(sessionmaker(autocommit=False,
+                                         autoflush=False,
+                                         bind=engine))
 
 Base = declarative_base()
 
-class NoteContent(Base):
-    __tablename__ = 'content'
-    id = Column(String, primary_key=True)
-    data = Column(String, nullable=False)
+Base.query = db_session.query_property()
+
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
 
 class Note(Base):
-    __tablename__ = 'note'
-    id = Column(String, primary_key=True)
-    title = Column(String)  # Dynamically set from NoteContent's first line, cached here
-    content = Column(String, ForeignKey('content.id'))
-    def __init__(self, title=None):
+    __tablename__ = 'notes'
+    note_id = Column(CHAR(36), primary_key=True)
+    title = Column(String)
+    deleted = Column(Boolean, default=False)
+    date_modified = Column(Integer, index=True)  # Seconds from epoch
+    def __init__(self, title):
         self.title = title
-        self.data = ""
 
+
+class NoteContent(Base):
+    __tablename__ = 'note_contents'
+    note_content_id = Column(CHAR(36), primary_key=True)
+    note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
+    data = Column(Text)
+    date_created = Column(Integer, index=True)  # Seconds from epoch
+
+# TODO: Last synced date field (global or per Note/NoteContent?
 
 class NotesDB:
     def __init__(self, db_url, server_url):
