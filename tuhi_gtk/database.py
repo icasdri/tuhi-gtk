@@ -16,8 +16,10 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+import uuid
+import time
 from sqlalchemy import create_engine, Column, CHAR, String, Text, Boolean, Integer, ForeignKey
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.ext.declarative import declarative_base
 from tuhi_gtk.config import DATABASE_URI
@@ -42,6 +44,8 @@ def config_database():
 TYPE_LOOKUP = {
     'int': int
 }
+
+# Last synced date field implemented as key-value pair in kv_store :)
 
 class KeyValueStore(object):
     def _get_object(self, key):
@@ -90,14 +94,34 @@ class KeyValueModel(Base):
     type = Column(String)
 
 
+def directly_serialize(model_object, fields):
+    result = {}
+    for field in fields:
+        result[field] = getattr(model_object, field)
+    return result
+
+
+def get_current_date():
+    return int(time.time())
+
+def new_uuid():
+    return str(uuid.uuid4())
+
+
 class Note(Base):
     __tablename__ = 'notes'
     note_id = Column(CHAR(36), primary_key=True)
     title = Column(String)
     deleted = Column(Boolean, default=False)
-    date_modified = Column(Integer, index=True)  # Seconds from epoch
-    def __init__(self, title):
-        self.title = title
+    date_modified = Column(Integer, index=True, onupdate=get_current_date)  # Seconds from epoch
+
+    def __init__(self, **kwargs):
+        self.note_id = new_uuid()
+        self.date_modified = get_current_date()
+        super(Note, self).__init__(**kwargs)
+
+    def serialize(self):
+        return directly_serialize(self, ("note_id", "title", "deleted", "date_modified"))
 
 
 class NoteContent(Base):
@@ -107,30 +131,15 @@ class NoteContent(Base):
     data = Column(Text)
     date_created = Column(Integer, index=True)  # Seconds from epoch
 
-# TODO: Last synced date field (global or per Note/NoteContent?
+    note = relationship("Note")
 
-class NotesDB:
-    def __init__(self, db_url, server_url):
-        # TODO: TESTING ONLY: fake note data
-        fake_note_data = [
-            "Test Note", "My little pony", "Canes Chicken",
-            "Test Note 2", "Random Crap", "Welcome to Tuhi",
-            "More Stuff", "Cool things!", "Blah blah blah",
-            "Untitled", "Some cool note", "My not-so-little pony",
-            "More and more stuff", "Hello world", "The language",
-            "Blah blah blah blah blah blah blah blah blah"
-        ]
-        self.notes = {}
-        # self.notes = {i: Note(j) for i, j in enumerate(fake_note_data)}
+    def __init__(self, **kwargs):
+        self.note_content_id = new_uuid()
+        self.date_created = get_current_date()
+        super(NoteContent, self).__init__(**kwargs)
 
-    def get_note(self, note_id):
-        return self.notes[note_id]
+    def serialize(self):
+        s = directly_serialize(self, ("note_content_id", "data", "date_created"))
+        s["note"] = self.note_id
+        return s
 
-def db():
-    return global_instance
-
-def init_global_instance(*args, **kwargs):
-    global global_instance
-    global_instance = NotesDB(*args, **kwargs)
-
-global_instance = None
