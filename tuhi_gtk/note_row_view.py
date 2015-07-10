@@ -17,7 +17,7 @@
 
 from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
-from tuhi_gtk.notes_db import db
+from tuhi_gtk.database import db_session, Note
 
 
 class NoteRow(Gtk.ListBoxRow):
@@ -38,7 +38,7 @@ class NoteRow(Gtk.ListBoxRow):
         return note_row
 
     def get_note(self):
-        return db().get_note(self.note_id)
+        return Note.query.filter(Note.note_id == self.note_id).one()
 
     def spinner_start(self):
         if self._spin_status is False:

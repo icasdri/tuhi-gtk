@@ -18,9 +18,19 @@
 from pkg_resources import resource_filename
 import os.path
 
+USERDATA_DIR = os.path.expanduser("~/.local/share/tuhi-gtk")
+USERCONFIG_DIR = os.path.expanduser("~/.config/tuhi-gtk")
+
+def config_directories():
+    for directory in (USERDATA_DIR, USERCONFIG_DIR):
+        os.makedirs(directory, mode=0o751, exist_ok=True)
+
+DATABASE_URI = "sqlite:///" + os.path.join(USERDATA_DIR, "tuhi_gtk_notes.db")
+
 DATA_BASEDIR = ""
 UI_BASEDIR = os.path.join(DATA_BASEDIR, "ui")
 UI_EXTENSION = ".xml"
 
 def get_ui_file(ui_name):
     return resource_filename(__name__, os.path.join(UI_BASEDIR, ui_name + UI_EXTENSION))
+

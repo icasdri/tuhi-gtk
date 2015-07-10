@@ -17,6 +17,14 @@
 
 from gi.repository import Gtk
 from tuhi_gtk.main_view import get_window
+from tuhi_gtk.config import config_directories
+from tuhi_gtk.database import config_database
 
-get_window().show_all()
-Gtk.main()
+def config_all():
+    config_directories()
+    config_database()
+
+if __name__ == "__main__":
+    config_all()
+    get_window().show_all()
+    Gtk.main()

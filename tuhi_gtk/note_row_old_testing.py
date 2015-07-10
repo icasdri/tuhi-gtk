@@ -23,6 +23,7 @@ MARGIN = 4
 
 # TODO: TESTING ONLY: Some NoteRow stubs for UI lnf testing before real logic
 def _testing_only_list_elements(list_, test_spinners=False):
+    return
     for i in range(16):
         x = NoteRow.get_note_row(i)
         list_.add(x)
