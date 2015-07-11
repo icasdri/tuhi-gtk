@@ -90,9 +90,11 @@ class ServerAccessPoint(object):
 
 
     def push(self):
-        notes_list = [note.serialize() for note in Note.query.filter(or_(Note.pushed == False, )).all()]
-        note_contents_list = [note.serialize() for note in NoteContent.query.filter(NoteContent.pushed == False).all()]
-        data_dict = {"notes": notes_list, "note_contents": note_contents_list}
+        tried_notes = note_change_tracker.get_all_as_query() \
+                                         .union(note_notonserver_tracker.get_all_as_query())
+        tried_note_contents = note_content_notonserver_tracker.get_all_as_query()
+        data_dict = {"notes": [n.serialize() for n in tried_notes.all()],
+                     "note_contents": [nc.serialize() for nc in tried_note_contents.all()]}
         data = json.dumps(data_dict)
 
         try:
@@ -106,25 +108,25 @@ class ServerAccessPoint(object):
                 pass
                 return
 
-            tried_notes = Note.query.filter(Note.note_id.in_((note["note_id"] for note in notes_list))) \
-                if len(notes_list) > 0 else Note.query.filter(1 == 0)
-            tried_note_contents = NoteContent.query.filter(NoteContent.note_content_id.in_((note_content["note_content_id"] for note_content in note_contents_list))) \
-                if len(note_contents_list) > 0 else NoteContent.query.filter(1 == 0)
-
             if r.status_code == 200:
-                tried_notes.update({Note.pushed: True}, synchronize_session='fetch')
-                tried_note_contents.update({NoteContent.pushed: True}, synchronize_session='fetch')
+                note_change_tracker.discard_all()
+                note_notonserver_tracker.discard_all()
+                note_content_notonserver_tracker.discard_all()
                 db_session.commit()
                 return
 
             if r.status_code == 202:
                 response = r.json()
+
                 failed_notes = response["notes"] if "notes" in response else []
                 failed_note_contents = response["note_contents"] if "note_contents" in response else []
-                tried_notes.filter(Note.note_id.notin_((note["note_id"] for note in failed_notes))) \
-                           .update({Note.pushed: True}, synchronize_session='fetch')
-                tried_note_contents.filter(NoteContent.note_content_id.notin_((note_content["note_content_id"] for note_content in failed_note_contents))) \
-                                   .update({NoteContent.pushed: True}, synchronize_session='fetch')
-                db_session.commit()
-                # TODO: Conflict checks here
+                failed_notes = [x["note_id"] for x in failed_notes]
+                failed_note_contents = [x["note_content_id"] for x in failed_note_contents]
+
+                note_change_tracker.discard_all_but_failures(failed_notes)
+                note_notonserver_tracker.discard_all_but_failures(failed_notes)
+                note_content_notonserver_tracker.discard_all_but_failures(failed_note_contents)
+
+                # TODO: Actually read the error codes for each failure
+
             print(r.json())
