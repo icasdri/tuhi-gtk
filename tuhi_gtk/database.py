@@ -114,6 +114,7 @@ class Note(Base):
     title = Column(String)
     deleted = Column(Boolean, default=False)
     date_modified = Column(Integer, index=True, onupdate=get_current_date)  # Seconds from epoch
+    pushed = Column(Boolean, default=False, index=True)
 
     def __init__(self, **kwargs):
         self.note_id = new_uuid()
@@ -139,6 +140,7 @@ class NoteContent(Base):
     note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
     data = Column(Text)
     date_created = Column(Integer, index=True)  # Seconds from epoch
+    pushed = Column(Boolean, default=False, index=True)
 
     note = relationship("Note")
 
