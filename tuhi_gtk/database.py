@@ -123,6 +123,15 @@ class Note(Base):
     def serialize(self):
         return directly_serialize(self, ("note_id", "title", "deleted", "date_modified"))
 
+    def update(self, serialized_dict):
+        for field in ("title", "deleted", "date_modified"):
+            setattr(self, field, serialized_dict[field])
+
+    @classmethod
+    def deserialize(cls, serialized_dict):
+        # TODO: safety checks on server response
+        return cls(**serialized_dict)
+
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'
@@ -143,3 +152,8 @@ class NoteContent(Base):
         s["note"] = self.note_id
         return s
 
+    @classmethod
+    def deserialize(cls, serialized_dict):
+        serialized_dict["note_id"] = serialized_dict["note"]
+        del serialized_dict["note"]
+        return cls(**serialized_dict)
