@@ -20,7 +20,7 @@ import uuid
 import time
 from sqlalchemy import create_engine, Column, CHAR, String, Text, Boolean, Integer, ForeignKey
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound, FlushError
 from sqlalchemy.ext.declarative import declarative_base
 from tuhi_gtk.config import DATABASE_URI
 
@@ -179,3 +179,58 @@ class NoteContent(Base):
         del serialized_dict["note"]
         return cls(**serialized_dict)
 
+
+class NoteChangeTrackingModel(Base):
+    __tablename__ = "note_change_tracking"
+    note_id = Column(CHAR(36), ForeignKey("notes.note_id"), primary_key=True)
+
+
+class NoteNotOnServerTrackingModel(Base):
+    __tablename__ = "note_notonserver_tracking"
+    note_id = Column(CHAR(36), ForeignKey("notes.note_id"), primary_key=True)
+
+
+class NoteContentNotOnServerTrackingModel(Base):
+    __tablename__ = "note_content_notonserver_tracking"
+    note_content_id = Column(CHAR(36), ForeignKey("note_contents.note_content_id"), primary_key=True)
+
+
+class Tracker(object):
+    model = None
+    tracking_model = None
+    pk_name = "pk"
+
+    def register(self, note):
+        t = self.tracking_model()
+        setattr(t, self.pk_name, getattr(note, self.pk_name))
+        try:
+            db_session.add(t)
+            db_session.commit()
+        except FlushError:
+            db_session.rollback()
+
+    def get_all_as_query(self):
+        return self.model.query.join(self.tracking_model)
+
+    def get_all(self):
+        return self.get_all_as_query().all()
+
+
+class NoteChangeTracker(Tracker):
+    model = Note
+    tracking_model = NoteChangeTrackingModel
+    pk_name = "note_id"
+
+class NoteNotOnServerTracker(Tracker):
+    model = Note
+    tracking_model = NoteNotOnServerTrackingModel
+    pk_name = "note_id"
+
+class NoteContentNotOnServerTracker(Tracker):
+    model = NoteContent
+    tracking_model = NoteContentNotOnServerTrackingModel
+    pk_name = "note_id"
+
+note_change_tracker = NoteChangeTracker()
+note_notonserver_tracker = NoteNotOnServerTracker()
+note_content_notonserver_tracker = NoteContentNotOnServerTracker()
