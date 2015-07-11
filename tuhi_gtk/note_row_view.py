@@ -21,24 +21,21 @@ from tuhi_gtk.database import db_session, Note
 
 
 class NoteRow(Gtk.ListBoxRow):
-    def initialize(self, builder, note_id):
+    def initialize(self, builder, note):
         self.builder = builder
         self._label = builder.get_object("label")
         self._box = builder.get_object("box")
         self._spinner = builder.get_object("spinner")
         self._spin_status = False
-        self.note_id = note_id
+        self.note = note
         self.update_title()
 
     @staticmethod
-    def get_note_row(note_id):
+    def get_note_row(note_wrapper):
         builder = Gtk.Builder.new_from_file(get_ui_file("note_row"))
         note_row = builder.get_object("note_row")
-        note_row.initialize(builder, note_id)
+        note_row.initialize(builder, note_wrapper.unwrap())
         return note_row
-
-    def get_note(self):
-        return Note.query.filter(Note.note_id == self.note_id).one()
 
     def spinner_start(self):
         if self._spin_status is False:
@@ -54,5 +51,5 @@ class NoteRow(Gtk.ListBoxRow):
 
     def update_title(self, title=None):
         if title is None:
-            title = self.get_note().title
+            title = self.note.title
         self._label.set_text(title)

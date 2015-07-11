@@ -15,9 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gtk, GObject, GtkSource
+from gi.repository import Gtk, GObject, GtkSource, Gio
 from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.database import Note
+from tuhi_gtk.view_model import NoteListModel, create_widget_func, sort_func, NoteWrapper
+
 
 class Handlers:
     def __init__(self, builder):
@@ -25,8 +28,19 @@ class Handlers:
         self.side_hb = builder.get_object("side_hb")
         self.search_bar = builder.get_object("search_bar")
         self.search_button = builder.get_object("search_button")
-        self.list = builder.get_object("list")
         self._hb_synced_width = 0
+        self._init_list()
+
+    def _init_list(self):
+        self.list = self.builder.get_object("list")
+        GObject.type_register(NoteWrapper)
+        GObject.type_register(NoteListModel)
+        # self.list_model = Gio.ListStore.new(NoteWrapper)
+        self.list_model = NoteListModel()
+        self.list.bind_model(self.list_model, create_widget_func)
+        self.list.set_sort_func(sort_func)
+        n = NoteWrapper(Note.query.first())
+        # self.list_model.append(hash(n))
 
     def synchronize_hb_size_callback(self, widget, allocation):
         if allocation.width != self._hb_synced_width:
@@ -50,8 +64,6 @@ def get_window():
     GObject.type_register(note_row_view.NoteRow)
     builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
     builder.connect_signals(Handlers(builder))
-    from tuhi_gtk.note_row_old_testing import _testing_only_list_elements
-    _testing_only_list_elements(builder.get_object("list"), test_spinners=True)
     window = builder.get_object("main_window")
     window.connect("delete-event", Gtk.main_quit)
     return window
