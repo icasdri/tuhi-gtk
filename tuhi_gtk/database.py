@@ -107,19 +107,38 @@ def get_current_date():
 def new_uuid():
     return str(uuid.uuid4())
 
+# x = 22
+#
+# def get_date_ignore_pushed(context):
+#     print(dir(context))
+#     print(context.result_column_struct)
+#     print(context.returning_cols)
+#     # print(context.result())
+#     print(context.current_parameters)
+#     global x
+#     x = context
+#     c = context.current_parameters
+#     if "pushed" in c and c["pushed"] in (True, False):
+#         pass
+#     else:
+#         return get_current_date()
 
 class Note(Base):
     __tablename__ = 'notes'
     note_id = Column(CHAR(36), primary_key=True)
     title = Column(String)
     deleted = Column(Boolean, default=False)
-    date_modified = Column(Integer, index=True, onupdate=get_current_date)  # Seconds from epoch
-    pushed = Column(Boolean, default=False, index=True)
+    date_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
+    pushed = Column(Boolean, index=True, nullable=False, default=False)
 
     def __init__(self, **kwargs):
         self.note_id = new_uuid()
         self.date_modified = get_current_date()
         super(Note, self).__init__(**kwargs)
+
+    def register_change(self):
+        # Call this when making a change to this Note
+        self.date_modified = get_current_date()
 
     def serialize(self):
         return directly_serialize(self, ("note_id", "title", "deleted", "date_modified"))
@@ -139,8 +158,8 @@ class NoteContent(Base):
     note_content_id = Column(CHAR(36), primary_key=True)
     note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
     data = Column(Text)
-    date_created = Column(Integer, index=True)  # Seconds from epoch
-    pushed = Column(Boolean, default=False, index=True)
+    date_created = Column(Integer, index=True, default=get_current_date)  # Seconds from epoch
+    pushed = Column(Boolean, index=True, default=False)
 
     note = relationship("Note")
 
@@ -159,3 +178,4 @@ class NoteContent(Base):
         serialized_dict["note_id"] = serialized_dict["note"]
         del serialized_dict["note"]
         return cls(**serialized_dict)
+
