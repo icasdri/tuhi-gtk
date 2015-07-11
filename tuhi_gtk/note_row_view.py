@@ -31,10 +31,10 @@ class NoteRow(Gtk.ListBoxRow):
         self.update_title()
 
     @staticmethod
-    def get_note_row(note_wrapper):
+    def get_note_row(note):
         builder = Gtk.Builder.new_from_file(get_ui_file("note_row"))
         note_row = builder.get_object("note_row")
-        note_row.initialize(builder, note_wrapper.unwrap())
+        note_row.initialize(builder, note)
         return note_row
 
     def spinner_start(self):

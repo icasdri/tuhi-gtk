@@ -154,6 +154,9 @@ class Note(Base):
         # TODO: safety checks on server response
         return cls(external=True, **serialized_dict)
 
+    def __hash__(self):
+        return hash(self.note_id)
+
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'

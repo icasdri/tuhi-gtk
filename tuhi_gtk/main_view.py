@@ -19,7 +19,7 @@ from gi.repository import Gtk, GObject, GtkSource, Gio
 from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.database import Note
-from tuhi_gtk.view_model import NoteListModel, create_widget_func, sort_func, NoteWrapper
+from tuhi_gtk.view_model import sort_func, NoteListController
 
 
 class Handlers:
@@ -33,14 +33,8 @@ class Handlers:
 
     def _init_list(self):
         self.list = self.builder.get_object("list")
-        GObject.type_register(NoteWrapper)
-        GObject.type_register(NoteListModel)
-        # self.list_model = Gio.ListStore.new(NoteWrapper)
-        self.list_model = NoteListModel()
-        self.list.bind_model(self.list_model, create_widget_func)
+        self.list_controller = NoteListController(self.list)
         self.list.set_sort_func(sort_func)
-        n = NoteWrapper(Note.query.first())
-        # self.list_model.append(hash(n))
 
     def synchronize_hb_size_callback(self, widget, allocation):
         if allocation.width != self._hb_synced_width:
