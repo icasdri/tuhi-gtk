@@ -16,18 +16,44 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 import requests, json
+from sqlalchemy.orm.exc import NoResultFound
 
 from tuhi_gtk.database import db_session, kv_store, Note, NoteContent, get_current_date
-from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, SYNCSERVER_AFTER_PARAM
+from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT
 
 class ServerAccessPoint(object):
     def __init__(self):
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
 
+    def sync(self):
+        self.pull()
+        self.push()
+        kv_store["LAST_SYNC_DATE"] = get_current_date()
+
     def pull(self):
         last_sync_date = kv_store["LAST_SYNC_DATE"]
-        target_url = self.sync_url + SYNCSERVER_AFTER_PARAM + str(last_sync_date)
+
+        try:
+            r = requests.get(self.sync_url, params={"after": str(last_sync_date)}, auth=self.auth)
+        except ConnectionError:
+            # TODO: try again, Gobject.timeout_add probably
+            pass
+        else:
+            data = r.json()
+            for serialized_note in data["notes"]:
+                try:
+                    note = Note.query.filter(Note.note_id == serialized_note["note_id"])
+                    note.update(serialized_note)
+                except NoResultFound:
+                    note = Note.deserialize(serialized_note)
+                db_session.add(note)
+                db_session.commit()
+            for serialized_note_content in data["note_contents"]:
+                note_content = NoteContent.deserialize(serialized_note_content)
+                db_session.add(note_content)
+                db_session.commit()
+
 
     def push(self):
         last_sync_date = kv_store["LAST_SYNC_DATE"]
@@ -42,4 +68,4 @@ class ServerAccessPoint(object):
             # TODO: try again, Gobject.timeout_add probably
             pass
         else:
-            print(r.json)
+            print(r.json())
