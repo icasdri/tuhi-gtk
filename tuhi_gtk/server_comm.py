@@ -87,8 +87,6 @@ class ServerAccessPoint(object):
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
 
-
-
     def push(self):
         notes_list = [note.serialize() for note in Note.query.filter(Note.pushed == False).all()]
         note_contents_list = [note.serialize() for note in NoteContent.query.filter(NoteContent.pushed == False).all()]
@@ -101,17 +99,20 @@ class ServerAccessPoint(object):
             # TODO: try again, Gobject.timeout_add probably
             pass
         else:
-            if r.status_code in (400, 401):
-                # TODO: Actual error handling
+            if r.status_code in (400, 401, 500):
+                # TODO: Actual error handling for Bad Request, Unauthorized, and Server Error
                 pass
                 return
 
-            tried_notes = Note.query.filter(Note.note_id.in_((note["note_id"] for note in notes_list)))
-            tried_note_contents = NoteContent.query.filter(NoteContent.note_content_id.in_((note_content["note_content_id"] for note_content in note_contents_list)))
+            tried_notes = Note.query.filter(Note.note_id.in_((note["note_id"] for note in notes_list))) \
+                if len(notes_list) > 0 else Note.query.filter(1 == 0)
+            tried_note_contents = NoteContent.query.filter(NoteContent.note_content_id.in_((note_content["note_content_id"] for note_content in note_contents_list))) \
+                if len(note_contents_list) > 0 else NoteContent.query.filter(1 == 0)
 
             if r.status_code == 200:
-                tried_notes.update({Note.pushed: True})
-                tried_note_contents.update({NoteContent.pushed: True})
+                tried_notes.update({Note.pushed: True}, synchronize_session='fetch')
+                tried_note_contents.update({NoteContent.pushed: True}, synchronize_session='fetch')
+                db_session.commit()
                 return
 
             if r.status_code == 202:
@@ -119,7 +120,9 @@ class ServerAccessPoint(object):
                 failed_notes = response["notes"] if "notes" in response else []
                 failed_note_contents = response["note_contents"] if "note_contents" in response else []
                 tried_notes.filter(Note.note_id.notin_((note["note_id"] for note in failed_notes))) \
-                           .update({Note.pushed: True})
+                           .update({Note.pushed: True}, synchronize_session='fetch')
                 tried_note_contents.filter(NoteContent.note_content_id.notin_((note_content["note_content_id"] for note_content in failed_note_contents))) \
-                                   .update({NoteContent.pushed: True})
+                                   .update({NoteContent.pushed: True}, synchronize_session='fetch')
+                db_session.commit()
+                # TODO: Conflict checks here
             print(r.json())
