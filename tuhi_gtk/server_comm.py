@@ -18,7 +18,9 @@
 import requests, json
 from sqlalchemy.orm.exc import NoResultFound, FlushError
 
-from tuhi_gtk.database import db_session, kv_store, Note, NoteContent, get_current_date, new_uuid
+from tuhi_gtk.database import db_session, kv_store, Note, NoteContent, get_current_date, new_uuid, \
+    note_change_tracker, note_notonserver_tracker, note_content_notonserver_tracker, \
+    note_store, note_content_store
 from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT
 
 class ServerAccessPoint(object):
@@ -44,51 +46,51 @@ class ServerAccessPoint(object):
         else:
             data = r.json()
             for serialized_note in data["notes"]:
-                try:
-                    note = Note.query.filter(Note.note_id == serialized_note["note_id"]).one()
-                    if note.pushed is True:
-                        note.update(serialized_note)
+                note = note_store.get(serialized_note)
+                if note is not None:
+                    # I have a note that has the same id as the one coming in.
+                    if note in note_notonserver_tracker:
+                        # There is a new note on the server that conflicts with a new note I've made.
+                        # We are talking about different notes. Conflict with server. Must change id of notonserver note
+                        old_id, new_id = note_store.rename_to_new_uuid(note)
+                        note_notonserver_tracker.register_rename(old_id, new_id)
+                        note_store.add_new(serialized_note)
+                    elif note in note_change_tracker:
+                        # There is change to a note I previously pushed to the server, but I have since changed the note as well.
+                        # We are talking about the same note. See who is newer.
+                        if note.date_modified < serialized_note["date_modified"]:
+                            # Server is newer, discard my change.
+                            note.update(serialized_note)
+                            note_change_tracker.discard(note)  # This commits the session.
+                        # Otherwise, I am newer, and I ignore the change
                     else:
-                        # Conflict from server with unsynced Note, must rename the one that was going to be pushed, and
-                        # refactor it's associated NoteContents
-                        old_note_id = note.note_id
-                        new_note_id = new_uuid()
-                        note.note_id = new_note_id
-                        NoteContent.query.filter(NoteContent.note_id == old_note_id) \
-                                         .update({Note.note_id: new_note_id})
+                        # This is an update to a note that I previously pushed, but I have not since changed.
+                        note.update(serialized_note)
                         db_session.commit()
-                        # Create new note_id like that from the server
-                        note = Note.deserialize(serialized_note)
-                except NoResultFound:
-                    note = Note.deserialize(serialized_note)
-                note.pushed = True
-                db_session.add(note)
-                db_session.commit()
+                else:
+                    # This is a new note that I am unaware of.
+                    note_store.add_new(serialized_note)
 
             for serialized_note_content in data["note_contents"]:
-                note_content = NoteContent.deserialize(serialized_note_content)
-                note_content.pushed = True
-                try:
-                    db_session.add(note_content)
-                    db_session.commit()
-                except FlushError as e:
-                    db_session.rollback()
-                    persisted_note_content = NoteContent.query.filter(NoteContent.note_content_id == note_content.note_content_id).one()
-                    if persisted_note_content.pushed is True:
-                        # Something is awry with server. Server should not send conflicting NoteContents (which are immutable)
-                        pass
-                    else:
-                        # Conflict from server with unsynced Note Content, must rename one that was going to be pushed
-                        persisted_note_content.note_content_id = new_uuid()
-                        db_session.add(persisted_note_content)
-                        db_session.commit()
-                        db_session.add(note_content)
-                        db_session.commit()
+                note_content = note_content_store.get(serialized_note_content)
+                if note_content is not None:
+                    # I have a note content that has same id as the one coming in.
+                    if note_content in note_content_notonserver_tracker:
+                        # This note content from the server conflicts with one that I've made but not pushed
+                        old_id, new_id = note_content_store.rename_to_new_uuid(note_content)
+                        note_content_notonserver_tracker.register_rename(old_id, new_id)
+                        note_content_store.add_new(serialized_note_content)
+                    # Otherwise, something is awry with server. Server should not send conflicting NoteContents
+                    # (which are immutable) -- thus, I ignore the change
+                else:
+                    # This is a new note content that I am unaware of.
+                    note_content_store.add_new(serialized_note_content)
+
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
 
     def push(self):
-        notes_list = [note.serialize() for note in Note.query.filter(Note.pushed == False).all()]
+        notes_list = [note.serialize() for note in Note.query.filter(or_(Note.pushed == False, )).all()]
         note_contents_list = [note.serialize() for note in NoteContent.query.filter(NoteContent.pushed == False).all()]
         data_dict = {"notes": notes_list, "note_contents": note_contents_list}
         data = json.dumps(data_dict)

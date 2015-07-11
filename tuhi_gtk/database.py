@@ -129,16 +129,18 @@ class Note(Base):
     title = Column(String)
     deleted = Column(Boolean, default=False)
     date_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
-    pushed = Column(Boolean, index=True, nullable=False, default=False)
 
-    def __init__(self, **kwargs):
-        self.note_id = new_uuid()
-        self.date_modified = get_current_date()
+    def __init__(self, external=False, **kwargs):
+        if not external:
+            self.note_id = new_uuid()
+            self.date_modified = get_current_date()
+            note_notonserver_tracker.register(self)
         super(Note, self).__init__(**kwargs)
 
     def register_change(self):
         # Call this when making a change to this Note
         self.date_modified = get_current_date()
+        note_change_tracker.register(self)
 
     def serialize(self):
         return directly_serialize(self, ("note_id", "title", "deleted", "date_modified"))
@@ -150,7 +152,7 @@ class Note(Base):
     @classmethod
     def deserialize(cls, serialized_dict):
         # TODO: safety checks on server response
-        return cls(**serialized_dict)
+        return cls(external=True, **serialized_dict)
 
 
 class NoteContent(Base):
@@ -159,13 +161,14 @@ class NoteContent(Base):
     note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
     data = Column(Text)
     date_created = Column(Integer, index=True, default=get_current_date)  # Seconds from epoch
-    pushed = Column(Boolean, index=True, default=False)
 
     note = relationship("Note")
 
-    def __init__(self, **kwargs):
-        self.note_content_id = new_uuid()
-        self.date_created = get_current_date()
+    def __init__(self, external=False, **kwargs):
+        if not external:
+            self.note_content_id = new_uuid()
+            self.date_created = get_current_date()
+            note_content_notonserver_tracker.register(self)
         super(NoteContent, self).__init__(**kwargs)
 
     def serialize(self):
@@ -177,8 +180,66 @@ class NoteContent(Base):
     def deserialize(cls, serialized_dict):
         serialized_dict["note_id"] = serialized_dict["note"]
         del serialized_dict["note"]
-        return cls(**serialized_dict)
+        return cls(external=True, **serialized_dict)
 
+### STORES ###
+
+class Store(object):
+    model = None
+    pk_name = None
+
+    def add_new(self, new_item):
+        if isinstance(new_item, self.model):
+            m = new_item
+        else:
+            m = self.model.deserialize(new_item)
+        db_session.add(m)
+        db_session.commit()
+        return m
+
+    def rename_to_new_uuid(self, old):
+        new_id = new_uuid()
+        while new_id in self:
+            new_id = new_uuid()
+        if isinstance(old, self.model):
+            target = old
+        else:
+            target = self.get(old)
+        old_id = getattr(target, self.pk_name)
+        setattr(target, self.pk_name, new_id)
+        db_session.commit()
+        return old_id, new_id
+
+    def get(self, id_or_serialized):
+        if isinstance(id_or_serialized, dict):
+            id = id_or_serialized[self.pk_name]
+        else:
+            id = id_or_serialized
+
+        try:
+            return self.model.query.filter(getattr(self.model, self.pk_name) == id).one()
+        except NoResultFound:
+            return None
+
+    def __contains__(self, item):
+        if isinstance(item, self.model):
+            item = getattr(item, self.pk_name)
+        return self.get(item) is not None
+
+class NoteStore(Store):
+    model = Note
+    pk_name = "note_id"
+
+class NoteContentStore(Store):
+    model = NoteContent
+    pk_name = "note_content_id"
+
+
+note_store = NoteStore()
+note_content_store = NoteContentStore()
+
+
+### TRACKERS ###
 
 class NoteChangeTrackingModel(Base):
     __tablename__ = "note_change_tracking"
@@ -201,19 +262,42 @@ class Tracker(object):
     pk_name = "pk"
 
     def register(self, note):
-        t = self.tracking_model()
-        setattr(t, self.pk_name, getattr(note, self.pk_name))
-        try:
-            db_session.add(t)
-            db_session.commit()
-        except FlushError:
-            db_session.rollback()
+        if note not in self:
+            t = self.tracking_model()
+            setattr(t, self.pk_name, getattr(note, self.pk_name))
+            try:
+                db_session.add(t)
+                db_session.commit()
+            except FlushError:  # This should not happen anymore. But just in case.
+                db_session.rollback()
 
     def get_all_as_query(self):
         return self.model.query.join(self.tracking_model)
 
     def get_all(self):
         return self.get_all_as_query().all()
+
+    def discard(self, depr):
+        tracking_depr = self._get(depr)
+        db_session.delete(tracking_depr)
+        db_session.commmit()
+
+    def register_rename(self, old_id, new_id):
+        setattr(self._get(old_id), self.pk_name, new_id)
+        db_session.commit()
+
+    def _get(self, item):
+        if isinstance(item, self.model):
+            pk = getattr(item, self.pk_name)
+        else:
+            pk = item
+        try:
+            return self.tracking_model.query.filter(getattr(self.tracking_model, self.pk_name) == pk).one()
+        except NoResultFound:
+            return None
+
+    def __contains__(self, item):
+        return self._get(item) is not None
 
 
 class NoteChangeTracker(Tracker):
