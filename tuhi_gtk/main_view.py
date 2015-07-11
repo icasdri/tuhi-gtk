@@ -18,8 +18,7 @@
 from gi.repository import Gtk, GObject, GtkSource, Gio
 from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file
-from tuhi_gtk.database import Note
-from tuhi_gtk.view_model import sort_func, NoteListController
+from tuhi_gtk.list_controller import sort_func, NoteListController
 
 
 class Handlers:
