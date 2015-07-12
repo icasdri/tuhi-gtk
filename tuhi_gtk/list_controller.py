@@ -33,6 +33,15 @@ class NoteListController(object):
     def initial_populate(self):
         for note in Note.query.filter(Note.deleted == False).all():
             self.add_note(note)
+        if "LAST_NOTE_SELECTED" in kv_store:
+            last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).one()
+        else:
+            last_note_selected = Note.query.order_by(Note.date_modified.desc()).first()
+        self.select_note(last_note_selected)
+
+    def shutdown(self):
+        print("Controller Shutdown")
+        kv_store["LAST_NOTE_SELECTED"] = self.list.get_selected_row().note.note_id
 
     def db_changed(self, session):
         print("WTF Why no Event")
@@ -89,15 +98,23 @@ class NoteListController(object):
     def select_note(self, note):
         noterow = self._noterow(note)
         self.list.select_row(noterow)
+        self.activate_note(note)
 
     def activate_note(self, note):
-        print("Note activated: " + note.title)
+        print("Note activated: ({}): {}".format(note.note_id, note.title))
         content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \
                                    .order_by(NoteContent.date_created.desc()) \
                                    .first()
         if content is not None:
             self.buffer = Gtk.TextBuffer(text=content.data)
-            self.source_view.set_buffer(self.buffer)
+        else:
+            self.buffer = Gtk.TextBuffer()
+
+        self.source_view.set_buffer(self.buffer)
+        self.buffer.connect("changed", self.buffer_changed)
+
+    def buffer_changed(self, buffer):
+        print("Buffer changed!")
 
 
 def sort_func(a, b):

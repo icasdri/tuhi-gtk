@@ -38,6 +38,10 @@ class Handlers:
         self.list_controller = NoteListController(self.list, self.source_view)
         self.list.set_sort_func(sort_func)
 
+    def shutdown(self, window, event):
+        self.list_controller.shutdown()
+        Gtk.main_quit(window, event)
+
     def synchronize_hb_size_callback(self, widget, allocation):
         if allocation.width != self._hb_synced_width:
             self.side_hb.set_size_request(allocation.width+2, -1)
@@ -79,8 +83,9 @@ def get_window():
     GObject.type_register(GtkSource.View)
     GObject.type_register(note_row_view.NoteRow)
     builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
-    builder.connect_signals(Handlers(builder))
+    handler = Handlers(builder)
+    builder.connect_signals(handler)
     window = builder.get_object("main_window")
-    window.connect("delete-event", Gtk.main_quit)
+    window.connect("delete-event", handler.shutdown)
     return window
 
