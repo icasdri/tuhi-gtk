@@ -100,6 +100,18 @@ class NoteListController(object):
         self.list.select_row(noterow)
         self.activate_note(note)
 
+    def select_newer(self, note):
+        target_note = Note.query.filter(Note.deleted == False) \
+                                .filter(Note.date_modified > note.date_modified) \
+                                .order_by(Note.date_modified.asc()) \
+                                .first()
+        if target_note is None:
+            target_note = Note.query.filter(Note.deleted == False) \
+                                    .filter(Note.date_modified < note.date_modified) \
+                                    .order_by(Note.date_modified.desc()) \
+                                    .first()
+        self.select_note(target_note)
+
     def activate_note(self, note):
         print("Note activated: ({}): {}".format(note.note_id, note.title))
         content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \

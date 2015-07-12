@@ -59,19 +59,16 @@ class Handlers:
         self.search_button.set_active(False)
 
     def new_note_clicked(self, new_note_button):
-        # TODO: Testing Only
         note = Note(title="New Note")
         db_session.add(note)
         db_session.commit()
         self.list_controller.select_note(note)
 
     def delete_note_clicked(self, delete_note_button):
-        # TODO: Testing Only
-        x = Note.query.filter(Note.deleted == False).filter(Note.title == "The Tester Note").first()
-        if x is not None:
-            x.deleted = True
-            x.register_change()
-            db_session.commit()
+        note = self.list.get_selected_row().note
+        note.deleted = True
+        self.list_controller.select_newer(note)
+        db_session.commit()
 
     def row_activated(self, listbox, row):
         self.list_controller.activate_note(row.note)
