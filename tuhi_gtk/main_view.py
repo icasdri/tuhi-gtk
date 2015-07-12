@@ -37,6 +37,10 @@ class Handlers:
         self.list = self.builder.get_object("list")
         self.list_controller = NoteListController(self.list, self.source_view)
         self.list.set_sort_func(sort_func)
+        self.placeholder = Gtk.Builder.new_from_file(get_ui_file("empty_list_placeholder"))\
+                                      .get_object("empty_list_placeholder")
+        self.placeholder.show_all()
+        self.list.set_placeholder(self.placeholder)
 
     def shutdown(self, window, event):
         self.list_controller.shutdown()
