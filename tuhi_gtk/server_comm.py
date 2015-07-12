@@ -18,7 +18,7 @@
 import requests, json
 from sqlalchemy.orm.exc import NoResultFound, FlushError
 
-from tuhi_gtk.database import db_session, kv_store, Note, NoteContent, get_current_date, new_uuid, \
+from tuhi_gtk.database import kv_store, get_current_date, \
     note_change_tracker, note_notonserver_tracker, note_content_notonserver_tracker, \
     note_store, note_content_store
 from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT
@@ -65,8 +65,7 @@ class ServerAccessPoint(object):
                         # Otherwise, I am newer, and I ignore the change
                     else:
                         # This is an update to a note that I previously pushed, but I have not since changed.
-                        note.update(serialized_note)
-                        db_session.commit()
+                        note_store.update(note, serialized_note)
                 else:
                     # This is a new note that I am unaware of.
                     note_store.add_new(serialized_note)
@@ -87,7 +86,6 @@ class ServerAccessPoint(object):
                     note_content_store.add_new(serialized_note_content)
 
             kv_store["LAST_PULL_DATE"] = get_current_date()
-
 
     def push(self):
         tried_notes = note_change_tracker.get_all_as_query() \
@@ -112,7 +110,6 @@ class ServerAccessPoint(object):
                 note_change_tracker.discard_all()
                 note_notonserver_tracker.discard_all()
                 note_content_notonserver_tracker.discard_all()
-                db_session.commit()
                 return
 
             if r.status_code == 202:
