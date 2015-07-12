@@ -51,3 +51,9 @@ class NoteRow(Gtk.ListBoxRow):
     def refresh(self):
         log.ui.debug("Refreshing NoteRow: (%s) '%s'", self.note.note_id, self.note.title)
         self._label.set_text(self.note.title)
+
+    def mark_unsaved(self):
+        pass
+
+    def mark_saved(self):
+        self.spinner_start()

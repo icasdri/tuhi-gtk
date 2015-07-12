@@ -17,15 +17,22 @@
 
 from gi.repository import Gtk, GObject
 from sqlalchemy import event
-from tuhi_gtk.config import log, BUFFER_ACTIVITY_TIMEOUT, BUFFER_ACTIVITY_TARGET_COUNT
+from tuhi_gtk.config import log, SESSION_TIMEOUT, BUFFER_ACTIVITY_CHECKERS_RESOLUTION, BUFFER_INACTIVITY_TARGET_COUNT, \
+    BUFFER_ACTIVITY_TARGET_COUNT
 from tuhi_gtk.database import db_session, kv_store, Note, NoteContent
 from tuhi_gtk.note_row_view import NoteRow
 
 
 class CurrentStateContainer(object):
     note = None
+    buffer = None
+    activity_count = 0
     inactivity_count = 0
-    activity_checker_id = None
+    checker_id = None
+    # Used for session-based saving history.
+    # Save a new NoteContent if the previous one was not created in this session
+    session_timed_out = False
+    session_contents = set()
 
 
 class NoteListController(object):
@@ -36,6 +43,7 @@ class NoteListController(object):
         self.note_set = set()
         self.noterow_lookup = {}
         self.initial_populate()
+        GObject.timeout_add(SESSION_TIMEOUT, self.session_timeout_callback)
         event.listen(db_session, "before_commit", self.db_changed)
 
     def initial_populate(self):
@@ -127,52 +135,100 @@ class NoteListController(object):
         self.select_note(target_note)
 
     def activate_note(self, note):
+        self.save_current_note()
+
         if note is None:
             self.current.note = None
-            if self.current.activity_checker_id is not None:
-                log.co.debug("Detaching activity checker")
-                GObject.source_remove(self.current.activity_checker_id)
+            if self.current.checker_id is not None:
+                log.co.debug("Detaching inactivity checker")
+                GObject.source_remove(self.current.checker_id)
             log.ui.debug("Disabling SourceView")
             self.source_view.set_sensitive(False)
             self.source_view.hide()
             return
 
-        if self.current.activity_checker_id is None:
-            log.co.debug("Attaching activity checker")
-            self.current.activity_checker_id = GObject.timeout_add(BUFFER_ACTIVITY_TIMEOUT, self.activity_checker_callback)
+        if self.current.checker_id is None:
+            log.co.debug("Attaching inactivity checker")
+            self.current.checker_id = GObject.timeout_add(BUFFER_ACTIVITY_CHECKERS_RESOLUTION, self.checker_callback)
 
         self.current.note = note
         self.source_view.set_sensitive(True)
         self.source_view.show()
         log.co.debug("Activating Note: (%s): '%s'", note.note_id, note.title)
-        content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \
-                                   .order_by(NoteContent.date_created.desc()) \
-                                   .first()
+        content = note.get_head_content()
         if content is not None:
-            self.buffer = Gtk.TextBuffer(text=content.data)
+            self.current.buffer = Gtk.TextBuffer(text=content.data)
         else:
-            self.buffer = Gtk.TextBuffer()
+            self.current.buffer = Gtk.TextBuffer()
 
-        self.source_view.set_buffer(self.buffer)
-        self.buffer.connect("changed", self.buffer_changed)
+        self.source_view.set_buffer(self.current.buffer)
+        self.current.buffer.connect("changed", self.buffer_changed)
 
     def buffer_changed(self, buffer):
         self.current.inactivity_count = 1
+        if self.current.activity_count < 1:
+            self.current.activity_count = 1
         print("Buffer changed!")
 
-    def activity_checker_callback(self):
-        print("Activty Checker Callback %d" % self.current.inactivity_count)
+    def session_timeout_callback(self):
+        log.co.info("Session has timed out")
+        self.current.session_timed_out = True
+        return True
+
+    def checker_callback(self):
+        # print("Checker Callback: activity %d | inactivity %d" % (self.current.activity_count, self.current.inactivity_count))
         if self.current.inactivity_count > 0:
-            if self.current.inactivity_count >= BUFFER_ACTIVITY_TARGET_COUNT:
+            if self.current.inactivity_count >= BUFFER_INACTIVITY_TARGET_COUNT:
                 self.current.inactivity_count = 0
+                self.current.activity_count = 0
                 self.inactivity_endpoint()
             else:
                 self.current.inactivity_count += 1
+        if self.current.activity_count > 0:
+            if self.current.activity_count >= BUFFER_ACTIVITY_TARGET_COUNT:
+                self.current.activity_count = 0
+                self.current.inactivity_count = 0
+                self.activity_endpoint()
+            else:
+                self.current.activity_count += 1
         return True
+
+    def activity_endpoint(self):
+        print("EXTENDED ACTIVITY: current note: %s" % self.current.note)
+        self.save_current_note()
 
     def inactivity_endpoint(self):
         print("INACTIVITY: current note: %s" % self.current.note)
-        pass
+        self.save_current_note()
+
+    def save_current_note(self):
+        if self.current.session_timed_out:
+            log.co.info("Resolving timed out session")
+            self.current.session_contents.clear()
+
+        note = self.current.note
+        if self.current.note is None:
+            return
+        log.co.info("Saving note: (%s) '%s'", note.note_id, note.title)
+
+        old_content = note.get_head_content()
+
+        old_data = old_content.data if old_content is not None else ""
+        new_data = self.current.buffer.props.text
+
+        if new_data != old_data:
+            if old_content is None or old_content.note_content_id not in self.current.session_contents:
+                new_content = NoteContent(note=note, data=new_data)
+                db_session.add(new_content)
+                db_session.commit()
+                note.get_head_content()
+                if old_content.note_content_id not in self.current.session_contents:
+                    self.current.session_contents.add(old_content.note_content_id)
+            else:
+                old_content.data = new_data
+                db_session.commit()
+
+        self._noterow(note).mark_saved()
 
 
 def sort_func(a, b):
