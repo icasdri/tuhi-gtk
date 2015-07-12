@@ -161,6 +161,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                 <child>
                                     <object class="GtkListBox" id="list">
                                         <property name="selection-mode">single</property>
+                                        <signal name="row-activated" handler="row_activated"/>
                                     </object>
                                 </child>
                             </object>

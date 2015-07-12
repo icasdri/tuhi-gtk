@@ -17,13 +17,14 @@
 
 from gi.repository import Gtk, GObject
 from sqlalchemy import event
-from tuhi_gtk.database import db_session, Note
+from tuhi_gtk.database import db_session, kv_store, Note, NoteContent
 from tuhi_gtk.note_row_view import NoteRow
 
 
 class NoteListController(object):
-    def __init__(self, main_list):
+    def __init__(self, main_list, source_view):
         self.list = main_list
+        self.source_view = source_view
         self.note_set = set()
         self.noterow_lookup = {}
         self.initial_populate()
@@ -63,8 +64,9 @@ class NoteListController(object):
 
     def add_note(self, note):
         noterow = self._noterow(note)
-        self.list.add(noterow)
-        self._refresh_list()
+        if noterow not in self.list:
+            self.list.add(noterow)
+            self._refresh_list()
 
     def remove_note(self, note):
         noterow = self._noterow(note)
@@ -83,6 +85,19 @@ class NoteListController(object):
         # The below causes exit code 139 for some reason, segfault in kernel logs
         # self.list.invalidate_sort()
         # self.list.invalidate_filter()
+
+    def select_note(self, note):
+        noterow = self._noterow(note)
+        self.list.select_row(noterow)
+
+    def activate_note(self, note):
+        print("Note activated: " + note.title)
+        content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \
+                                   .order_by(NoteContent.date_created.desc()) \
+                                   .first()
+        if content is not None:
+            self.buffer = Gtk.TextBuffer(text=content.data)
+            self.source_view.set_buffer(self.buffer)
 
 
 def sort_func(a, b):

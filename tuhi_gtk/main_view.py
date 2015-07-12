@@ -29,12 +29,13 @@ class Handlers:
         self.side_hb = builder.get_object("side_hb")
         self.search_bar = builder.get_object("search_bar")
         self.search_button = builder.get_object("search_button")
+        self.source_view = builder.get_object("source_view")
         self._hb_synced_width = 0
         self._init_list()
 
     def _init_list(self):
         self.list = self.builder.get_object("list")
-        self.list_controller = NoteListController(self.list)
+        self.list_controller = NoteListController(self.list, self.source_view)
         self.list.set_sort_func(sort_func)
 
     def synchronize_hb_size_callback(self, widget, allocation):
@@ -55,9 +56,10 @@ class Handlers:
 
     def new_note_clicked(self, new_note_button):
         # TODO: Testing Only
-        n = Note(title="The Tester Note")
-        db_session.add(n)
+        note = Note(title="New Note")
+        db_session.add(note)
         db_session.commit()
+        self.list_controller.select_note(note)
 
     def delete_note_clicked(self, delete_note_button):
         # TODO: Testing Only
@@ -66,6 +68,9 @@ class Handlers:
             x.deleted = True
             x.register_change()
             db_session.commit()
+
+    def row_activated(self, listbox, row):
+        self.list_controller.activate_note(row.note)
 
 
 main_list = None
