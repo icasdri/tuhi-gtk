@@ -130,11 +130,13 @@ class Note(Base):
     title = Column(String)
     deleted = Column(Boolean, default=False)
     date_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
+    date_content_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
 
     def __init__(self, external=False, **kwargs):
         if not external:
             self.note_id = new_uuid()
             self.date_modified = get_current_date()
+            self.date_content_modified = get_current_date()
             note_notonserver_tracker.register(self)
         super(Note, self).__init__(**kwargs)
 
@@ -241,6 +243,17 @@ class Store(object):
 class NoteStore(Store):
     model = Note
     pk_name = "note_id"
+
+    def recalculate_date_content_modified(self, note_id):
+        note_content = NoteContent.query.filter(NoteContent.note_id == note_id) \
+                                        .order_by(NoteContent.date_created.desc())\
+                                        .first()
+        if note_content is not None:
+            note = self.get(note_id)
+            if note is not None:
+                if note.date_content_modified < note_content.date_created
+                    note.date_content_modified = note_content.date_created
+                    db_session.commit()
 
 class NoteContentStore(Store):
     model = NoteContent

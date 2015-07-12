@@ -85,6 +85,10 @@ class ServerAccessPoint(object):
                     # This is a new note content that I am unaware of.
                     note_content_store.add_new(serialized_note_content)
 
+            # Recalculate date_content_modified on Note instances
+            for note_id in {nc["note_id"] for nc in data["note_contents"]}:
+                note_store.recalculate_date_content_modified(note_id)
+
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
     def push(self):
