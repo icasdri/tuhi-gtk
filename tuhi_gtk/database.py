@@ -251,7 +251,7 @@ class NoteStore(Store):
         if note_content is not None:
             note = self.get(note_id)
             if note is not None:
-                if note.date_content_modified < note_content.date_created
+                if note.date_content_modified < note_content.date_created:
                     note.date_content_modified = note_content.date_created
                     db_session.commit()
 
