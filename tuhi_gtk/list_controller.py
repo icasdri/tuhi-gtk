@@ -36,12 +36,17 @@ class NoteListController(object):
         if "LAST_NOTE_SELECTED" in kv_store:
             last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).one()
         else:
-            last_note_selected = Note.query.order_by(Note.date_modified.desc()).first()
+            last_note_selected = Note.non_deleted().order_by(Note.date_modified.desc()).first()
         self.select_note(last_note_selected)
 
     def shutdown(self):
         print("Controller Shutdown")
-        kv_store["LAST_NOTE_SELECTED"] = self.list.get_selected_row().note.note_id
+        selected_note_row = self.list.get_selected_row()
+        if selected_note_row is None:
+            if "LAST_NOTE_SELECTED" in kv_store:
+                del kv_store["LAST_NOTE_SELECTED"]
+        else:
+            kv_store["LAST_NOTE_SELECTED"] = selected_note_row.note.note_id
 
     def db_changed(self, session):
         print("WTF Why no Event")
@@ -63,6 +68,8 @@ class NoteListController(object):
                     self.refresh_note(obj)
 
     def _noterow(self, note):
+        if note is None:
+            return None
         if note.note_id in self.noterow_lookup:
             noterow = self.noterow_lookup[note.note_id]
         else:
@@ -113,6 +120,10 @@ class NoteListController(object):
         self.select_note(target_note)
 
     def activate_note(self, note):
+        if note is None:
+            self.source_view.set_sensitive(False)
+            return
+        self.source_view.set_sensitive(True)
         print("Note activated: ({}): {}".format(note.note_id, note.title))
         content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \
                                    .order_by(NoteContent.date_created.desc()) \
