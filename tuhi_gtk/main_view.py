@@ -69,16 +69,16 @@ class Handlers:
         self.list_controller.select_note(note)
 
     def delete_note_clicked(self, delete_note_button):
-        note = self.list.get_selected_row().note
-        note.deleted = True
-        self.list_controller.select_newer(note)
-        db_session.commit()
+        selected_row = self.list.get_selected_row()
+        if selected_row is not None:
+            note = selected_row.note
+            note.deleted = True
+            self.list_controller.select_newer(note)
+            db_session.commit()
 
     def row_activated(self, listbox, row):
         self.list_controller.activate_note(row.note)
 
-
-main_list = None
 
 def get_window():
     GObject.type_register(GtkSource.View)
