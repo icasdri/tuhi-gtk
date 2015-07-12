@@ -17,13 +17,20 @@
 
 from gi.repository import Gtk, GObject
 from sqlalchemy import event
-from tuhi_gtk.config import log
+from tuhi_gtk.config import log, BUFFER_ACTIVITY_TIMEOUT, BUFFER_ACTIVITY_TARGET_COUNT
 from tuhi_gtk.database import db_session, kv_store, Note, NoteContent
 from tuhi_gtk.note_row_view import NoteRow
 
 
+class CurrentStateContainer(object):
+    note = None
+    inactivity_count = 0
+    activity_checker_id = None
+
+
 class NoteListController(object):
     def __init__(self, main_list, source_view):
+        self.current = CurrentStateContainer()
         self.list = main_list
         self.source_view = source_view
         self.note_set = set()
@@ -121,10 +128,20 @@ class NoteListController(object):
 
     def activate_note(self, note):
         if note is None:
+            self.current.note = None
+            if self.current.activity_checker_id is not None:
+                log.co.debug("Detaching activity checker")
+                GObject.source_remove(self.current.activity_checker_id)
             log.ui.debug("Disabling SourceView")
             self.source_view.set_sensitive(False)
             self.source_view.hide()
             return
+
+        if self.current.activity_checker_id is None:
+            log.co.debug("Attaching activity checker")
+            self.current.activity_checker_id = GObject.timeout_add(BUFFER_ACTIVITY_TIMEOUT, self.activity_checker_callback)
+
+        self.current.note = note
         self.source_view.set_sensitive(True)
         self.source_view.show()
         log.co.debug("Activating Note: (%s): '%s'", note.note_id, note.title)
@@ -140,7 +157,22 @@ class NoteListController(object):
         self.buffer.connect("changed", self.buffer_changed)
 
     def buffer_changed(self, buffer):
+        self.current.inactivity_count = 1
         print("Buffer changed!")
+
+    def activity_checker_callback(self):
+        print("Activty Checker Callback %d" % self.current.inactivity_count)
+        if self.current.inactivity_count > 0:
+            if self.current.inactivity_count >= BUFFER_ACTIVITY_TARGET_COUNT:
+                self.current.inactivity_count = 0
+                self.inactivity_endpoint()
+            else:
+                self.current.inactivity_count += 1
+        return True
+
+    def inactivity_endpoint(self):
+        print("INACTIVITY: current note: %s" % self.current.note)
+        pass
 
 
 def sort_func(a, b):

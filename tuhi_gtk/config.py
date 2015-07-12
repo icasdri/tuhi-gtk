@@ -67,6 +67,9 @@ UI_EXTENSION = ".xml"
 
 SYNCSERVER_NOTES_ENDPOINT = "/notes"
 
+BUFFER_ACTIVITY_TIMEOUT = 1000
+BUFFER_ACTIVITY_TARGET_COUNT = 5
+
 def get_ui_file(ui_name):
     return resource_filename(__name__, os.path.join(UI_BASEDIR, ui_name + UI_EXTENSION))
 
