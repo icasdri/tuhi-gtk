@@ -160,7 +160,7 @@ class Note(Base):
 
     def get_head_content(self):
         note_content = NoteContent.query.filter(NoteContent.note_id == self.note_id) \
-                                  .order_by(NoteContent.date_created) \
+                                  .order_by(NoteContent.date_created.desc()) \
                                   .first()
         if note_content is not None:
             if self.date_content_modified < note_content.date_created:
