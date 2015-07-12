@@ -18,7 +18,9 @@
 from gi.repository import Gtk, GObject, GtkSource, Gio
 from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.database import Note, db_session
 from tuhi_gtk.list_controller import sort_func, NoteListController
+from tuhi_gtk.note_row_view import NoteRow
 
 
 class Handlers:
@@ -51,6 +53,22 @@ class Handlers:
     def stop_search(self, search_entry):
         self.search_button.set_active(False)
 
+    def new_note_clicked(self, new_note_button):
+        # TODO: Testing Only
+        n = Note(title="The Tester Note")
+        db_session.add(n)
+        db_session.commit()
+
+    def delete_note_clicked(self, delete_note_button):
+        # TODO: Testing Only
+        x = Note.query.filter(Note.deleted == False).filter(Note.title == "The Tester Note").first()
+        if x is not None:
+            x.deleted = True
+            x.register_change()
+            db_session.commit()
+
+
+main_list = None
 
 def get_window():
     GObject.type_register(GtkSource.View)

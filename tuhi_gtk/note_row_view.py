@@ -28,7 +28,7 @@ class NoteRow(Gtk.ListBoxRow):
         self._spinner = builder.get_object("spinner")
         self._spin_status = False
         self.note = note
-        self.update_title()
+        self.refresh()
 
     @staticmethod
     def get_note_row(note):
@@ -49,7 +49,5 @@ class NoteRow(Gtk.ListBoxRow):
             self._box.remove(self.spinner)
             self._spin_status = False
 
-    def update_title(self, title=None):
-        if title is None:
-            title = self.note.title
-        self._label.set_text(title)
+    def refresh(self):
+        self._label.set_text(self.note.title)
