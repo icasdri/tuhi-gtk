@@ -31,12 +31,13 @@ class NoteListController(object):
         event.listen(db_session, "before_commit", self.db_changed)
 
     def initial_populate(self):
-        for note in Note.query.filter(Note.deleted == False).all():
+        for note in Note.non_deleted().all():
             self.add_note(note)
+        last_note_selected = None
         if "LAST_NOTE_SELECTED" in kv_store:
-            last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).one()
-        else:
-            last_note_selected = Note.non_deleted().order_by(Note.date_modified.desc()).first()
+            last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).first()
+        if last_note_selected is None:
+            last_note_selected = Note.non_deleted().order_by(Note.date_content_modified.desc()).first()
         self.select_note(last_note_selected)
 
     def shutdown(self):
@@ -108,15 +109,13 @@ class NoteListController(object):
         self.activate_note(note)
 
     def select_newer(self, note):
-        target_note = Note.query.filter(Note.deleted == False) \
-                                .filter(Note.date_modified > note.date_modified) \
-                                .order_by(Note.date_modified.asc()) \
-                                .first()
+        target_note = Note.non_deleted().filter(Note.date_content_modified > note.date_content_modified) \
+                                        .order_by(Note.date_content_modified.asc()) \
+                                        .first()
         if target_note is None:
-            target_note = Note.query.filter(Note.deleted == False) \
-                                    .filter(Note.date_modified < note.date_modified) \
-                                    .order_by(Note.date_modified.desc()) \
-                                    .first()
+            target_note = Note.non_deleted().filter(Note.date_content_modified < note.date_content_modified) \
+                                            .order_by(Note.date_content_modified.desc()) \
+                                            .first()
         self.select_note(target_note)
 
     def activate_note(self, note):
@@ -141,4 +140,4 @@ class NoteListController(object):
 
 
 def sort_func(a, b):
-    return b.note.date_modified - a.note.date_modified
+    return b.note.date_content_modified - a.note.date_content_modified

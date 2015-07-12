@@ -40,6 +40,9 @@ def config_database():
     # TODO: Sanity checks on trackers (make sure targets references still exists, etc.)
     if not os.path.exists(DATABASE_URI):
         init_db()
+    else:
+        for note in Note.non_deleted().all():
+            note.get_head_content()
 
 
 TYPE_LOOKUP = {
@@ -152,6 +155,16 @@ class Note(Base):
         for field in ("title", "deleted", "date_modified"):
             setattr(self, field, serialized_dict[field])
 
+    def get_head_content(self):
+        note_content = NoteContent.query.filter(NoteContent.note_id == self.note_id) \
+                                  .order_by(NoteContent.date_created) \
+                                  .first()
+        if note_content is not None:
+            if self.date_content_modified < note_content.date_created:
+                self.date_content_modified = note_content.date_created
+                db_session.commit()
+        return note_content
+
     @classmethod
     def deserialize(cls, serialized_dict):
         # TODO: safety checks on server response
@@ -243,17 +256,6 @@ class Store(object):
 class NoteStore(Store):
     model = Note
     pk_name = "note_id"
-
-    def recalculate_date_content_modified(self, note_id):
-        note_content = NoteContent.query.filter(NoteContent.note_id == note_id) \
-                                        .order_by(NoteContent.date_created.desc())\
-                                        .first()
-        if note_content is not None:
-            note = self.get(note_id)
-            if note is not None:
-                if note.date_content_modified < note_content.date_created:
-                    note.date_content_modified = note_content.date_created
-                    db_session.commit()
 
 class NoteContentStore(Store):
     model = NoteContent
