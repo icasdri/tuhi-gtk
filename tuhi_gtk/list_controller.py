@@ -17,6 +17,7 @@
 
 from gi.repository import Gtk, GObject
 from sqlalchemy import event
+from tuhi_gtk.config import log
 from tuhi_gtk.database import db_session, kv_store, Note, NoteContent
 from tuhi_gtk.note_row_view import NoteRow
 
@@ -41,23 +42,25 @@ class NoteListController(object):
         self.select_note(last_note_selected)
 
     def shutdown(self):
-        print("Controller Shutdown")
+        log.co.debug("List Controller shutdown")
         selected_note_row = self.list.get_selected_row()
         if selected_note_row is None:
             if "LAST_NOTE_SELECTED" in kv_store:
+                log.co.debug("Clearing LAST_NOTE_SELECTED")
                 del kv_store["LAST_NOTE_SELECTED"]
         else:
+            log.co.debug("Setting LAST_NOTE_SELECTED: (%s): %s",
+                         selected_note_row.note.note_id, selected_note_row.note.title)
             kv_store["LAST_NOTE_SELECTED"] = selected_note_row.note.note_id
 
     def db_changed(self, session):
-        print(session.deleted)
-        print(session.dirty)
+        log.db.debug("Commit: session.new %s; session.deleted %s; session.dirty %s",
+                     session.new, session.deleted, session.dirty)
         for obj in session.new:
             if isinstance(obj, Note):
                 self.add_note(obj)
         for obj in session.deleted:
             if isinstance(obj, Note):
-                print("Recieved deletion from db_session: " + obj.title)
                 self.remove_note(obj)
         for obj in session.dirty:
             if isinstance(obj, Note):
@@ -118,12 +121,13 @@ class NoteListController(object):
 
     def activate_note(self, note):
         if note is None:
+            log.ui.debug("Disabling SourceView")
             self.source_view.set_sensitive(False)
             self.source_view.hide()
             return
         self.source_view.set_sensitive(True)
         self.source_view.show()
-        print("Note activated: ({}): {}".format(note.note_id, note.title))
+        log.co.debug("Activating Note: (%s): '%s'", note.note_id, note.title)
         content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \
                                    .order_by(NoteContent.date_created.desc()) \
                                    .first()

@@ -16,8 +16,7 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
-from tuhi_gtk.config import get_ui_file
-from tuhi_gtk.database import db_session, Note
+from tuhi_gtk.config import get_ui_file, log
 
 
 class NoteRow(Gtk.ListBoxRow):
@@ -50,4 +49,5 @@ class NoteRow(Gtk.ListBoxRow):
             self._spin_status = False
 
     def refresh(self):
+        log.ui.debug("Refreshing NoteRow: (%s) '%s'", self.note.note_id, self.note.title)
         self._label.set_text(self.note.title)
