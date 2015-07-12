@@ -37,6 +37,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
 
 def config_database():
+    # TODO: Sanity checks on trackers (make sure targets references still exists, etc.)
     if not os.path.exists(DATABASE_URI):
         init_db()
 
@@ -157,6 +158,10 @@ class Note(Base):
     def __hash__(self):
         return hash(self.note_id)
 
+    @classmethod
+    def non_deleted(cls):
+        return cls.query.filter(Note.deleted == False)
+
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'
@@ -212,6 +217,10 @@ class Store(object):
         setattr(target, self.pk_name, new_id)
         db_session.commit()
         return old_id, new_id
+
+    def update(self, item, serialized_data):
+        item.update(serialized_data)
+        db_session.commit()
 
     def get(self, id_or_serialized):
         if isinstance(id_or_serialized, dict):
