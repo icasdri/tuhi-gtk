@@ -50,14 +50,12 @@ class NoteListController(object):
             kv_store["LAST_NOTE_SELECTED"] = selected_note_row.note.note_id
 
     def db_changed(self, session):
-        print("WTF Why no Event")
         print(session.deleted)
         print(session.dirty)
         for obj in session.new:
             if isinstance(obj, Note):
                 self.add_note(obj)
         for obj in session.deleted:
-            print("Cane Cane Cane")
             if isinstance(obj, Note):
                 print("Recieved deletion from db_session: " + obj.title)
                 self.remove_note(obj)
@@ -121,8 +119,10 @@ class NoteListController(object):
     def activate_note(self, note):
         if note is None:
             self.source_view.set_sensitive(False)
+            self.source_view.hide()
             return
         self.source_view.set_sensitive(True)
+        self.source_view.show()
         print("Note activated: ({}): {}".format(note.note_id, note.title))
         content = NoteContent.query.filter(NoteContent.note_id == note.note_id) \
                                    .order_by(NoteContent.date_created.desc()) \
