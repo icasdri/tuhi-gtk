@@ -40,6 +40,7 @@ class NoteRow(Gtk.ListBoxRow):
         if self._spin_status is False:
             self._spinner.start()
             self._box.pack_end(self._spinner, expand=False, fill=False, padding=12)
+            self._spinner.show()
             self._spin_status = True
 
     def spinner_stop(self):
@@ -51,9 +52,12 @@ class NoteRow(Gtk.ListBoxRow):
     def refresh(self):
         log.ui.debug("Refreshing NoteRow: (%s) '%s'", self.note.note_id, self.note.title)
         self._label.set_text(self.note.title)
+        self.changed()
 
     def mark_unsaved(self):
         pass
 
     def mark_saved(self):
-        self.spinner_start()
+        print("Mark saved called: (%s) '%s'" % (self.note.note_id, self.note.title))
+        # self.spinner_start()
+        self.refresh()

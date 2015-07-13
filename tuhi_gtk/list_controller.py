@@ -37,6 +37,7 @@ class CurrentStateContainer(object):
 
 class NoteListController(object):
     def __init__(self, main_list, source_view):
+        log.co.info("Initializing Note List Controller")
         self.current = CurrentStateContainer()
         self.list = main_list
         self.source_view = source_view
@@ -47,6 +48,7 @@ class NoteListController(object):
         event.listen(db_session, "before_commit", self.db_changed)
 
     def initial_populate(self):
+        log.co.info("Populating Note List")
         for note in Note.non_deleted().all():
             self.add_note(note)
         last_note_selected = None
@@ -54,10 +56,12 @@ class NoteListController(object):
             last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).first()
         if last_note_selected is None:
             last_note_selected = Note.non_deleted().order_by(Note.date_content_modified.desc()).first()
+        log.co.debug("Selecting last note selected")
         self.select_note(last_note_selected)
 
     def shutdown(self):
         log.co.debug("List Controller shutdown")
+        self.save_current_note()
         selected_note_row = self.list.get_selected_row()
         if selected_note_row is None:
             if "LAST_NOTE_SELECTED" in kv_store:
@@ -154,7 +158,7 @@ class NoteListController(object):
         self.current.note = note
         self.source_view.set_sensitive(True)
         self.source_view.show()
-        log.co.debug("Activating Note: (%s): '%s'", note.note_id, note.title)
+        log.co.debug("Activating Note: (%s) '%s'", note.note_id, note.title)
         content = note.get_head_content()
         if content is not None:
             self.current.buffer = Gtk.TextBuffer(text=content.data)
@@ -194,11 +198,13 @@ class NoteListController(object):
         return True
 
     def activity_endpoint(self):
-        print("EXTENDED ACTIVITY: current note: %s" % self.current.note)
+        log.co.info("Detected extended activity on current note: (%s) '%s'",
+                    self.current.note.note_id, self.current.note.title)
         self.save_current_note()
 
     def inactivity_endpoint(self):
-        print("INACTIVITY: current note: %s" % self.current.note)
+        log.co.info("Detected inactivity on current note: (%s) '%s'",
+                    self.current.note.note_id, self.current.note.title)
         self.save_current_note()
 
     def save_current_note(self):
@@ -209,7 +215,6 @@ class NoteListController(object):
         note = self.current.note
         if self.current.note is None:
             return
-        log.co.info("Saving note: (%s) '%s'", note.note_id, note.title)
 
         old_content = note.get_head_content()
 
@@ -217,18 +222,21 @@ class NoteListController(object):
         new_data = self.current.buffer.props.text
 
         if new_data != old_data:
+            log.co.info("Saving note: (%s) '%s'", note.note_id, note.title)
             if old_content is None or old_content.note_content_id not in self.current.session_contents:
                 new_content = NoteContent(note=note, data=new_data)
                 db_session.add(new_content)
                 db_session.commit()
-                note.get_head_content()
-                if old_content.note_content_id not in self.current.session_contents:
-                    self.current.session_contents.add(old_content.note_content_id)
             else:
                 old_content.data = new_data
                 db_session.commit()
 
-        self._noterow(note).mark_saved()
+            note.get_head_content()
+            noterow = self._noterow(note)
+            noterow.mark_saved()
+
+        if old_content is not None and old_content.note_content_id not in self.current.session_contents:
+            self.current.session_contents.add(old_content.note_content_id)
 
 
 def sort_func(a, b):
