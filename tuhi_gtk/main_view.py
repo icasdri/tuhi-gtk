@@ -84,8 +84,12 @@ class Handlers:
             db_session.commit()
 
     def row_activated(self, listbox, row):
-        log.ui.debug("NoteRow clicked: (%s) '%s'", row.note.note_id, row.note.title)
-        self.list_controller.activate_note(row.note)
+        if row is None:
+            log.ui.debug("All NoteRows have been deselected")
+            self.list_controller.activate_note(None)
+        else:
+            log.ui.debug("NoteRow selected: (%s) '%s'", row.note.note_id, row.note.title)
+            self.list_controller.activate_note(row.note)
 
 
 def get_window():
