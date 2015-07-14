@@ -18,7 +18,7 @@
 from gi.repository import Gtk, GObject
 from sqlalchemy import event
 from tuhi_gtk.config import log, SESSION_TIMEOUT, BUFFER_ACTIVITY_CHECKERS_RESOLUTION, BUFFER_INACTIVITY_TARGET_COUNT, \
-    BUFFER_ACTIVITY_TARGET_COUNT
+    BUFFER_ACTIVITY_TARGET_COUNT, USE_SESSION_BASED_AUTOSAVE
 from tuhi_gtk.database import db_session, kv_store, Note, NoteContent
 from tuhi_gtk.note_row_view import NoteRow
 
@@ -130,10 +130,12 @@ class NoteListController(object):
 
     def select_newer(self, note):
         target_note = Note.non_deleted().filter(Note.date_content_modified > note.date_content_modified) \
+                                        .filter(Note.note_id != note.note_id) \
                                         .order_by(Note.date_content_modified.asc()) \
                                         .first()
         if target_note is None:
-            target_note = Note.non_deleted().filter(Note.date_content_modified < note.date_content_modified) \
+            target_note = Note.non_deleted().filter(Note.date_content_modified <= note.date_content_modified) \
+                                            .filter(Note.note_id != note.note_id) \
                                             .order_by(Note.date_content_modified.desc()) \
                                             .first()
         self.select_note(target_note)
@@ -144,7 +146,7 @@ class NoteListController(object):
         if note is None:
             self.current.note = None
             if self.current.checker_id is not None:
-                log.co.debug("Detaching inactivity checker")
+                log.co.debug("Detaching activity + inactivity checker")
                 GObject.source_remove(self.current.checker_id)
             log.ui.debug("Disabling SourceView")
             self.source_view.set_sensitive(False)
@@ -152,7 +154,7 @@ class NoteListController(object):
             return
 
         if self.current.checker_id is None:
-            log.co.debug("Attaching inactivity checker")
+            log.co.debug("Attaching activity + inactivity checker")
             self.current.checker_id = GObject.timeout_add(BUFFER_ACTIVITY_CHECKERS_RESOLUTION, self.checker_callback)
 
         self.current.note = note
@@ -172,7 +174,6 @@ class NoteListController(object):
         self.current.inactivity_count = 1
         if self.current.activity_count < 1:
             self.current.activity_count = 1
-        print("Buffer changed!")
 
     def session_timeout_callback(self):
         log.co.info("Session has timed out")
