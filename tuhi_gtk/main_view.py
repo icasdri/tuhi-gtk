@@ -30,6 +30,7 @@ class Handlers:
         self.search_bar = builder.get_object("search_bar")
         self.search_button = builder.get_object("search_button")
         self.source_view = builder.get_object("source_view")
+        self.history_popover_toggle_button = builder.get_object("history_popover_toggle_button")
         self._hb_synced_width = 0
         self._init_list()
 
@@ -75,6 +76,7 @@ class Handlers:
         self.list_controller.select_note(note)
 
     def delete_note_clicked(self, delete_note_button):
+        # TODO: Add target to this when adding menu (original button now used for history popover)
         log.ui.debug("Delete button clicked")
         selected_row = self.list.get_selected_row()
         if selected_row is not None:
@@ -90,6 +92,21 @@ class Handlers:
         else:
             log.ui.debug("NoteRow selected: (%s) '%s'", row.note.note_id, row.note.title)
             self.list_controller.activate_note(row.note)
+
+    def toggle_history_popover(self, toggle_button):
+        log.ui.debug("History popover toggle button toggled: %s", toggle_button.get_active())
+        if toggle_button.get_active() is True:
+            log.ui.debug("Building history popover")
+            history_popover_builder = Gtk.Builder.new_from_file(get_ui_file("history_popover"))
+            history_popover = history_popover_builder.get_object("history_popover")
+            history_popover.set_relative_to(toggle_button)
+            history_popover.connect("closed", self.history_popover_closed)
+            log.ui.debug("Showing history popover")
+            history_popover.show_all()
+
+    def history_popover_closed(self, history_popover):
+        log.ui.debug("History popover closed")
+        self.history_popover_toggle_button.set_active(False)
 
 
 def get_window():
