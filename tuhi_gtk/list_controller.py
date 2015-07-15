@@ -33,6 +33,9 @@ class CurrentStateContainer(object):
     # Save a new NoteContent if the previous one was not created in this session
     session_timed_out = False
     session_contents = set()
+    # Used by history popover
+    history_content_box = None
+    history_content_lookup = None
 
 
 class NoteListController(object):
@@ -41,7 +44,6 @@ class NoteListController(object):
         self.current = CurrentStateContainer()
         self.list = main_list
         self.source_view = source_view
-        self.note_set = set()
         self.noterow_lookup = {}
         self.initial_populate()
         GObject.timeout_add(SESSION_TIMEOUT, self.session_timeout_callback)
