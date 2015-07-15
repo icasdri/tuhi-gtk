@@ -209,7 +209,7 @@ class NoteListController(object):
         self.save_current_note()
 
     def save_current_note(self):
-        if self.current.session_timed_out:
+        if not USE_SESSION_BASED_AUTOSAVE or self.current.session_timed_out:
             log.co.info("Resolving timed out session")
             self.current.session_contents.clear()
 
