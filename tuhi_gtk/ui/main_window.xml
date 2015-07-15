@@ -32,6 +32,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="GtkImage" id="icon_note_props">
         <property name="icon_name">edit-symbolic</property>
     </object>
+    <object class="GtkImage" id="icon_history_details">
+        <property name="icon_name">document-open-recent-symbolic</property>
+    </object>
     <object class="GtkImage" id="icon_delete_note">
         <property name="icon_name">user-trash-symbolic</property>
     </object>
@@ -52,6 +55,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         <child>
                             <object class="GtkButton">
                                 <property name="image">icon_sync_notes</property>
+                                <signal name="clicked" handler="delete_note_clicked"/>
                             </object>
                             <packing>
                                 <property name="pack-type">start</property>
@@ -113,9 +117,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                             </packing>
                         </child>
                         <child>
-                            <object class="GtkButton">
-                                <property name="image">icon_delete_note</property>
-                                <signal name="clicked" handler="delete_note_clicked"/>
+                            <object class="GtkToggleButton" id="history_popover_toggle_button">
+                                <property name="image">icon_history_details</property>
+                                <signal name="toggled" handler="toggle_history_popover"/>
                             </object>
                             <packing>
                                 <property name="pack-type">end</property>
@@ -161,7 +165,37 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                 <child>
                                     <object class="GtkListBox" id="list">
                                         <property name="selection-mode">single</property>
-                                        <signal name="row-activated" handler="row_activated"/>
+                                        <!--<signal name="row-activated" handler="row_activated"/>-->
+                                        <signal name="row-selected" handler="row_activated"/>
+                                        <child type="placeholder">
+                                            <object class="GtkBox" id="note_list_placeholder">
+                                                <property name="orientation">vertical</property>
+                                                <property name="visible">true</property>
+                                                <child type="center">
+                                                    <object class="GtkBox">
+                                                        <property name="orientation">vertical</property>
+                                                        <property name="visible">true</property>
+                                                        <child>
+                                                            <object class="GtkImage" id="icon_empty_placeholder">
+                                                                <property name="icon_name">view-list-symbolic</property>
+                                                                <property name="icon_size">6</property>
+                                                                <property name="visible">true</property>
+                                                            </object>
+                                                            <packing>
+                                                                <property name="fill">true</property>
+                                                                <property name="expand">true</property>
+                                                            </packing>
+                                                        </child>
+                                                        <child>
+                                                            <object class="GtkLabel" id="placeholder_label">
+                                                                <property name="label">No Notes</property>
+                                                                <property name="visible">true</property>
+                                                            </object>
+                                                        </child>
+                                                    </object>
+                                                </child>
+                                            </object>
+                                        </child>
                                     </object>
                                 </child>
                             </object>
