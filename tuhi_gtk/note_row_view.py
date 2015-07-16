@@ -54,10 +54,11 @@ class NoteRow(Gtk.ListBoxRow):
         self._label.set_text(self.note.title)
         self.changed()
 
-    def mark_unsaved(self):
-        pass
+    def mark(self, mark):
+        if mark == "saved":
+            print("Mark saved called: (%s) '%s'" % (self.note.note_id, self.note.title))
+            # self.spinner_start()
+            self.refresh()
+        else:
+            log.ui.warn("Unknown NoteRow mark: %s", mark)
 
-    def mark_saved(self):
-        print("Mark saved called: (%s) '%s'" % (self.note.note_id, self.note.title))
-        # self.spinner_start()
-        self.refresh()
