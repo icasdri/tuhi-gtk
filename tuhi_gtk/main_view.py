@@ -19,7 +19,7 @@ from gi.repository import Gtk, GObject, GtkSource, Gio
 from tuhi_gtk import note_row_view
 from tuhi_gtk.config import get_ui_file, log
 from tuhi_gtk.database import Note, db_session
-from tuhi_gtk.list_controller import sort_func, NoteListController
+from tuhi_gtk.controllers import NoteListController, SourceViewController
 
 
 class Handlers:
@@ -29,20 +29,26 @@ class Handlers:
         self.side_hb = builder.get_object("side_hb")
         self.search_bar = builder.get_object("search_bar")
         self.search_button = builder.get_object("search_button")
-        self.source_view = builder.get_object("source_view")
         self.history_popover_toggle_button = builder.get_object("history_popover_toggle_button")
         self._hb_synced_width = 0
-        self._init_list()
 
-    def _init_list(self):
-        log.main.debug("Initializing Note ListBox")
+        self._init_sourceview()
+        self._init_notelist()
+
+        self.source_view_controller.set_intercontroller_dependency(self.list_controller)
+
+        self.list_controller.startup()
+        self.source_view_controller.startup()
+
+    def _init_sourceview(self):
+        log.main.debug("Initializing SourceView components and handlers")
+        self.source_view = self.builder.get_object("source_view")
+        self.source_view_controller = SourceViewController(self.source_view)
+
+    def _init_notelist(self):
+        log.main.debug("Initializing NoteList components and handlers")
         self.list = self.builder.get_object("list")
-        self.list_controller = NoteListController(self.list, self.source_view)
-        self.list.set_sort_func(sort_func)
-        self.placeholder = Gtk.Builder.new_from_file(get_ui_file("empty_list_placeholder"))\
-                                      .get_object("empty_list_placeholder")
-        self.placeholder.show_all()
-        self.list.set_placeholder(self.placeholder)
+        self.list_controller = NoteListController(self.list)
 
     def shutdown(self, window, event):
         log.main.debug("Main Window Handlers shutdown")
@@ -88,10 +94,10 @@ class Handlers:
     def row_activated(self, listbox, row):
         if row is None:
             log.ui.debug("All NoteRows have been deselected")
-            self.list_controller.activate_note(None)
+            self.source_view_controller.activate_note(None)
         else:
             log.ui.debug("NoteRow selected: (%s) '%s'", row.note.note_id, row.note.title)
-            self.list_controller.activate_note(row.note)
+            self.source_view_controller.activate_note(row.note)
 
     def toggle_history_popover(self, toggle_button):
         log.ui.debug("History popover toggle button toggled: %s", toggle_button.get_active())
