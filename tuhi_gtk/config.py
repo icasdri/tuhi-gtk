@@ -17,39 +17,6 @@
 
 from pkg_resources import resource_filename
 import os.path
-import sys
-import logging
-
-class CustomFormatter(logging.Formatter):
-    def __init__(self, prepend_text):
-        self.prepend_text = prepend_text
-        super(CustomFormatter, self).__init__()
-
-    def format(self, record):
-        prepend = "[%s] " % self.prepend_text
-        if record.levelno in (logging.WARNING, logging.ERROR, logging.CRITICAL):
-            prepend += "[%s] " % record.levelname
-        record.msg = prepend + record.msg
-        return super(CustomFormatter, self).format(record)
-
-class LogContainer(object):
-    main = logging.getLogger("tuhi_gtk.main")
-    ui = logging.getLogger("tuhi_gtk.ui")
-    co = logging.getLogger("tuhi_gtk.controllers")
-    db = logging.getLogger("tuhi_gtk.database")
-    sync = logging.getLogger("tuhi_gtk.sync")
-
-    def __init__(self):
-        for name in ("main", "ui", "co", "db", "sync"):
-            sublog = getattr(self, name)
-            level = logging.DEBUG
-            sublog.setLevel(logging.DEBUG)
-            handler = logging.StreamHandler(sys.stdout)
-            handler.setLevel(level)
-            handler.setFormatter(CustomFormatter(name))
-            sublog.addHandler(handler)
-
-log = LogContainer()
 
 USERDATA_DIR = os.path.expanduser("~/.local/share/tuhi-gtk")
 USERCONFIG_DIR = os.path.expanduser("~/.config/tuhi-gtk")

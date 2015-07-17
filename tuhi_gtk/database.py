@@ -22,9 +22,12 @@ from sqlalchemy import create_engine, Column, CHAR, String, Text, Boolean, Integ
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound, FlushError
 from sqlalchemy.ext.declarative import declarative_base
-from tuhi_gtk.config import DATABASE_URI, DATABASE_PATH, log
+from tuhi_gtk.config import DATABASE_URI, DATABASE_PATH
+from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 
-log.db.info("Initializing database engine")
+log = get_log_for_prefix_tuple(("db",))
+
+log.info("Initializing database engine")
 engine = create_engine(DATABASE_URI, convert_unicode=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
@@ -40,11 +43,11 @@ def init_db():
 def config_database():
     # TODO: Sanity checks on trackers (make sure targets references still exists, etc.)
     if not os.path.exists(DATABASE_PATH):
-        log.db.info("Creating database %s", DATABASE_URI)
+        log.info("Creating database %s", DATABASE_URI)
         init_db()
     else:
         for note in Note.non_deleted().all():
-            log.db.debug("Recalculating date_content_modified for: (%s) '%s'", note.note_id, note.title)
+            log.debug("Recalculating date_content_modified for: (%s) '%s'", note.note_id, note.title)
             note.get_head_content()
 
 

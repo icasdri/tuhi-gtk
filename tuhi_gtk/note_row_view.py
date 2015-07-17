@@ -16,8 +16,10 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
-from tuhi_gtk.config import get_ui_file, log
+from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 
+log = get_log_for_prefix_tuple(("ui", "note_row"))
 
 class NoteRow(Gtk.ListBoxRow):
     def initialize(self, builder, note):
