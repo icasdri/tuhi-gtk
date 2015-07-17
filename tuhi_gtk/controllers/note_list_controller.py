@@ -40,7 +40,7 @@ class NoteListController(ModelListController):
         if last_note_selected is None:
             last_note_selected = Note.non_deleted().order_by(Note.date_content_modified.desc()).first()
         self.log.debug("Selecting last note selected")
-        self._select_item(last_note_selected)
+        self.select_item(last_note_selected)
 
     def shutdown(self):
         selected_note_row = self.list.get_selected_row()
@@ -78,7 +78,7 @@ class NoteListController(ModelListController):
                                             .filter(Note.note_id != note.note_id) \
                                             .order_by(Note.date_content_modified.desc()) \
                                             .first()
-        self._select_item(target_note)
+        self.select_item(target_note)
 
     def mark_note(self, note, mark):
         noterow = self._get_row(note)
