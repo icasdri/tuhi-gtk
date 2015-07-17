@@ -82,7 +82,7 @@ class Handlers:
         note = Note(title="New Note")
         db_session.add(note)
         db_session.commit()
-        self.list_controller.select_note(note)
+        self.list_controller.select_item(note)
 
     def delete_note_clicked(self, delete_note_button):
         # TODO: Add target to this when adding menu (original button now used for history popover)

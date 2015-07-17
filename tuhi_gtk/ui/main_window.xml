@@ -55,6 +55,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         <child>
                             <object class="GtkButton">
                                 <property name="image">icon_sync_notes</property>
+                                <signal name="clicked" handler="delete_note_clicked"/>
                             </object>
                             <packing>
                                 <property name="pack-type">start</property>
