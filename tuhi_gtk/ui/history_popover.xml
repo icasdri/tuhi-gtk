@@ -31,31 +31,28 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <property name="margin-bottom">7</property>
                 <property name="margin-start">7</property>
                 <property name="margin-end">7</property>
-                <property name="width-request">200</property>
+                <property name="width-request">150</property>
                 <child>
                     <object class="GtkBox" id="history_popover_top_controls">
                         <property name="orientation">horizontal</property>
                         <child>
-                            <object class="GtkBox" id="undo_controls">
-                                <property name="orientation">horizontal</property>
-                                <child>
-                                    <object class="GtkButton" id="undo_button">
-                                        <style>
-                                            <!--<class name="flat"/>-->
-                                            <class name="menuitem"/>
-                                        </style>
-                                        <property name="image">icon_undo</property>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkButton" id="redo_button">
-                                        <style>
-                                            <!--<class name="flat"/>-->
-                                            <class name="menuitem"/>
-                                        </style>
-                                        <property name="image">icon_redo</property>
-                                    </object>
-                                </child>
+                            <object class="GtkButton" id="undo_button">
+                                <style>
+                                    <class name="menuitem"/>
+                                </style>
+                                <property name="height-request">30</property>
+                                <property name="width-request">30</property>
+                                <property name="image">icon_undo</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkButton" id="redo_button">
+                                <style>
+                                    <class name="menuitem"/>
+                                </style>
+                                <property name="height-request">30</property>
+                                <property name="width-request">30</property>
+                                <property name="image">icon_redo</property>
                             </object>
                         </child>
                     </object>
@@ -66,40 +63,12 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         <property name="height-request">5</property>
                     </object>
                 </child>
-                <child>
-                    <object class="GtkScrolledWindow" id="_scrolled_list">
-                        <property name="hscrollbar-policy">never</property>
-                        <property name="vscrollbar-policy">automatic</property>
-                        <property name="height-request">100</property>
-                        <!--<property name="width-request">266</property>-->
-                        <child>
-                            <object class="GtkBox" id="history_content_box">
-                                <property name="orientation">vertical</property>
-                                <child>
-                                    <object class="GtkButton">
-                                        <style>
-                                            <!--<class name="flat"/>-->
-                                            <class name="menuitem"/>
-                                            <class name="rounded"/>
-                                        </style>
-                                        <property name="label">Test Button</property>
-                                    </object>
-                                </child>
-                                <child>
-                                    <object class="GtkButton">
-                                        <style>
-                                            <!--<class name="flat"/>-->
-                                            <class name="menuitem"/>
-                                            <class name="rounded"/>
-                                        </style>
-                                        <property name="label">Test Button</property>
-                                    </object>
-                                </child>
-                            </object>
-                        </child>
-                    </object>
-                </child>
             </object>
         </child>
+    </object>
+    <object class="GtkScrolledWindow" id="scrolled_history_content">
+        <property name="hscrollbar-policy">never</property>
+        <property name="vscrollbar-policy">automatic</property>
+        <!--<property name="height-request">100</property>-->
     </object>
 </interface>
