@@ -72,6 +72,8 @@ BUFFER_ACTIVITY_CHECKERS_RESOLUTION = 1000
 BUFFER_INACTIVITY_TARGET_COUNT = 5
 BUFFER_ACTIVITY_TARGET_COUNT = 30
 
+USE_SESSION_BASED_AUTOSAVE = False
+
 def get_ui_file(ui_name):
     return resource_filename(__name__, os.path.join(UI_BASEDIR, ui_name + UI_EXTENSION))
 
