@@ -15,5 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from .list_controller import NoteListController
+from .note_list_controller import NoteListController
 from .source_view_controller import SourceViewController
