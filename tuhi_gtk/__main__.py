@@ -18,7 +18,10 @@
 from gi.repository import Gtk
 from tuhi_gtk.main_view import get_window
 from tuhi_gtk.config import config_directories
+from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.database import config_database
+
+log = get_log_for_prefix_tuple(("main",))
 
 def config_all():
     config_directories()
@@ -27,4 +30,5 @@ def config_all():
 if __name__ == "__main__":
     config_all()
     get_window().show_all()
+    log.info("Entering Gtk main loop")
     Gtk.main()

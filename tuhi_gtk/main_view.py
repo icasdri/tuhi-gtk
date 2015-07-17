@@ -66,7 +66,7 @@ class Handlers:
             # self.side_hb.set_allocation(hb_alloc)
             self._hb_synced_width = allocation.width
             # TODO: TESTING ONLY: Debug size allocation print statements
-            log.ui.debug("Width allocation: Listbox <-> HeaderBar: %d %d",
+            log.debug("Width allocation: Listbox <-> HeaderBar: %d %d",
                          allocation.width, self.side_hb.get_allocation().width)
 
     def toggle_search(self, toggle_button):
