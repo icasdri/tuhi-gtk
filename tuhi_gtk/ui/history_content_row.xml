@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
-    <object class="tuhi_gtk+history_content+HistoryContentRow" id="history_content_row">
+    <object class="tuhi_gtk+history_content_row+HistoryContentRow" id="history_content_row">
         <child>
             <object class="GtkLabel" id="label">
 

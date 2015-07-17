@@ -98,7 +98,7 @@ class ModelListController(Controller):
         row = self._get_row(item)
         row.refresh()
 
-    def _select_item(self, item):
+    def select_item(self, item):
         row = self._get_row(item)
         self.list.select_row(row)
 

@@ -19,39 +19,6 @@ from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
 
 
-class HistoryContentListController(object):
-    def __init__(self, history_popover_box):
-        self.history_popover_box = history_popover_box
-        self.history_content_list = None
-        self.history_content_lookup = None
-        self.current_note = None
-
-    def load_note(self, note):
-        if note == self.current_note:
-            return
-
-        if self.history_content_list is not None:
-            self.history_popover_box.remove(self.history_content_list)
-
-        self.history_content_list = get_history_content_list()
-        self.history_content_list.show_all()
-        self.history_popover_box.add(self.history_content_list)
-
-        self.initial_populate()
-
-    def initial_populate(self):
-        pass
-
-    def add_note_content(self, note_content):
-        pass
-
-    def remove_note_content(self, note_content):
-        pass
-
-    def refresh_note_content(self, note_content):
-        pass
-
-
 class HistoryContentRow(Gtk.ListBoxRow):
     def initialize(self, builder, note_content):
         self.builder = builder
@@ -67,7 +34,7 @@ class HistoryContentRow(Gtk.ListBoxRow):
         return history_content_row
 
     def refresh(self):
-        self.label.set_text(datetime.fromtimestamp(self.note_content.date_created).strftime("%b %d, %I:%m %p"))
+        self.label.set_text(datetime.fromtimestamp(self.note_content.date_created).strftime("%b %d, %I:%m:%S %p"))
 
 
 def get_history_content_list():

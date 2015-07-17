@@ -211,6 +211,10 @@ class NoteContent(Base):
         del serialized_dict["note"]
         return cls(external=True, **serialized_dict)
 
+    @classmethod
+    def query_for_note(cls, note):
+        return cls.query.filter(NoteContent.note_id == note.note_id)
+
 ### STORES ###
 
 class Store(object):

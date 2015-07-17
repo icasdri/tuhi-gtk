@@ -16,11 +16,11 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk, GObject, GtkSource, Gio
-from tuhi_gtk import note_row_view
+from tuhi_gtk import note_row_view, history_content_row
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.database import Note, db_session
-from tuhi_gtk.controllers import NoteListController, SourceViewController
+from tuhi_gtk.controllers import NoteListController, SourceViewController, HistoryController
 
 log_main = get_log_for_prefix_tuple(("main",))
 log = get_log_for_prefix_tuple(("ui", "handler"))
@@ -37,21 +37,33 @@ class Handlers:
 
         self._init_sourceview()
         self._init_notelist()
+        self._init_history_popover()
 
         self.source_view_controller.set_intercontroller_dependency(self.list_controller)
+        self.history_popover_controller.set_intercontroller_dependency(self.source_view_controller)
 
         self.list_controller.startup()
         self.source_view_controller.startup()
+        self.history_popover_controller.startup()
 
     def _init_sourceview(self):
-        log_main.debug("Initializing SourceView components and handlers")
+        log_main.debug("Initializing SourceView components and controllers")
         self.source_view = self.builder.get_object("source_view")
         self.source_view_controller = SourceViewController(self.source_view)
 
     def _init_notelist(self):
-        log_main.debug("Initializing NoteList components and handlers")
+        log_main.debug("Initializing NoteList components and controllers")
         self.list = self.builder.get_object("list")
         self.list_controller = NoteListController(self.list)
+
+    def _init_history_popover(self):
+        log_main.debug("Initializing History Popover components and controllers")
+        log.debug("Building history popover")
+        history_popover_builder = Gtk.Builder.new_from_file(get_ui_file("history_popover"))
+        history_popover = history_popover_builder.get_object("history_popover")
+        history_popover.set_relative_to(self.history_popover_toggle_button)
+        history_popover.connect("closed", self.history_popover_closed)
+        self.history_popover_controller = HistoryController(history_popover_builder)
 
     def shutdown(self, window, event):
         log_main.debug("Main Window Handlers shutdown")
@@ -98,20 +110,18 @@ class Handlers:
         if row is None:
             log.debug("All NoteRows have been deselected")
             self.source_view_controller.activate_note(None)
+            self.history_popover_toggle_button.set_sensitive(False)
         else:
             log.debug("NoteRow selected: (%s) '%s'", row.note.note_id, row.note.title)
             self.source_view_controller.activate_note(row.note)
+            self.history_popover_toggle_button.set_sensitive(True)
+            self.history_popover_controller.register_current_note(row.note)
 
     def toggle_history_popover(self, toggle_button):
         log.debug("History popover toggle button toggled: %s", toggle_button.get_active())
         if toggle_button.get_active() is True:
-            log.debug("Building history popover")
-            history_popover_builder = Gtk.Builder.new_from_file(get_ui_file("history_popover"))
-            history_popover = history_popover_builder.get_object("history_popover")
-            history_popover.set_relative_to(toggle_button)
-            history_popover.connect("closed", self.history_popover_closed)
             log.debug("Showing history popover")
-            history_popover.show_all()
+            self.history_popover_controller.activate_history_view()
 
     def history_popover_closed(self, history_popover):
         log.debug("History popover closed")
@@ -122,6 +132,7 @@ def get_window():
     log_main.debug("Registering GObject types")
     GObject.type_register(GtkSource.View)
     GObject.type_register(note_row_view.NoteRow)
+    GObject.type_register(history_content_row.HistoryContentRow)
     log_main.debug("Building Main Window")
     builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
     handler = Handlers(builder)

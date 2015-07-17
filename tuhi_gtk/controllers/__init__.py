@@ -17,3 +17,4 @@
 
 from .note_list_controller import NoteListController
 from .source_view_controller import SourceViewController
+from .history_controller import HistoryController
