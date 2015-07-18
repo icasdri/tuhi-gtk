@@ -31,6 +31,7 @@ class SourceViewController(object):
         self.activity_count = 0
 
         self.current_note = None
+        self.current_note_content = None
         self.current_buffer = None
 
         self.session_timed_out = False
@@ -50,9 +51,8 @@ class SourceViewController(object):
         self.save_current_note()
 
     def activate_note(self, note):
-        self.save_current_note()
-
         if note is None:
+            self.save_current_note()
             self.current_note = None
             if self.checker_id is not None:
                 log.debug("Detaching activity + inactivity checker")
@@ -62,6 +62,10 @@ class SourceViewController(object):
             self.source_view.hide()
             return
 
+        log.debug("Activating Note: (%s) '%s'", note.note_id, note.title)
+        content = note.get_head_content()
+        self.activate_note_content(content)
+
         if self.checker_id is None:
             log.debug("Attaching activity + inactivity checker")
             self.checker_id = GObject.timeout_add(BUFFER_ACTIVITY_CHECKERS_RESOLUTION, self.checker_callback)
@@ -69,8 +73,16 @@ class SourceViewController(object):
         self.current_note = note
         self.source_view.set_sensitive(True)
         self.source_view.show()
-        log.debug("Activating Note: (%s) '%s'", note.note_id, note.title)
-        content = note.get_head_content()
+
+    def activate_note_content(self, content):
+        if content is not None and content == self.current_note_content:
+            return
+
+        log.debug("Activating Note Content: %s", content.note_content_id if content is not None else "None")
+
+        self.save_current_note()
+        self.current_note_content = content
+
         if content is not None:
             self.current_buffer = Gtk.TextBuffer(text=content.data)
         else:
@@ -117,16 +129,23 @@ class SourceViewController(object):
                     self.current_note.note_id, self.current_note.title)
         self.save_current_note()
 
+    def get_current_note(self):
+        return self.current_note
+
+    def get_current_note_content(self):
+        return self.current_note_content
+
     def save_current_note(self):
         if not USE_SESSION_BASED_AUTOSAVE or self.session_timed_out:
             log.info("Resolving timed out session")
             self.session_contents.clear()
 
+        log.debug("Logic for save note called, performing validation")
         note = self.current_note
         if note is None:
             return
 
-        old_content = note.get_head_content()
+        old_content = self.current_note_content
 
         old_data = old_content.data if old_content is not None else ""
         new_data = self.current_buffer.props.text
@@ -141,7 +160,6 @@ class SourceViewController(object):
                 old_content.data = new_data
                 db_session.commit()
 
-            note.get_head_content()
             self.list_controller.mark_note(note, "saved")
 
         if old_content is not None and old_content.note_content_id not in self.session_contents:

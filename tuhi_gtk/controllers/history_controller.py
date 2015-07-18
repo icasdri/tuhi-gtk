@@ -29,34 +29,34 @@ class HistoryController(Controller):
         self.history_popover_box = history_popover_builder.get_object("history_popover_box")
         self.hc_list = None
         self.hcl_controller = None
-        self.current_note = None
-        self.current_note_content = None
 
     def set_intercontroller_dependency(self, source_view_controller):
         self.source_view_controller = source_view_controller
 
-    def register_current_note(self, note):
-        if note == self.current_note:
-            return
-        self.current_note = note
-        self.current_note_content = None
-
     def activate_history_view(self):
         if self.hc_list is not None:
+            self.log.debug("Destroying previous history content list")
             self.hc_list.destroy()
 
+        self.log.debug("Creating a new history content list")
         self.hc_list = get_history_content_list()
         self.hc_list.connect("row_selected", self.history_content_row_selected)
         self.history_popover_box.add(self.hc_list)
         self.hc_list.show_all()
 
-        self.hcl_controller = HistoryContentListController(self.hc_list, self.current_note)
-        self.hcl_controller.startup()
+        current_note = self.source_view_controller.get_current_note()
+        if current_note is not None:
+            self.hcl_controller = HistoryContentListController(self.hc_list, current_note)
+            self.hcl_controller.startup()
+            current_note_content = self.source_view_controller.get_current_note_content()
+            self.hcl_controller.select_item(current_note_content)
 
         self.history_popover.show_all()
 
     def history_content_row_selected(self, hc_list, row):
-        print("HISTORY CONTENT ROW SELECTED", row.note_content.note_content_id)
+        content = row.note_content if row is not None else None
+        self.log.debug("History content row selected: %s", content.note_content_id if content is not None else "None")
+        self.source_view_controller.activate_note_content(content)
 
 def get_history_content_list():
     builder = Gtk.Builder.new_from_file(get_ui_file("history_content_list"))

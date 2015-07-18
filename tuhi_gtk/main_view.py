@@ -40,11 +40,11 @@ class Handlers:
         self._init_history_popover()
 
         self.source_view_controller.set_intercontroller_dependency(self.list_controller)
-        self.history_popover_controller.set_intercontroller_dependency(self.source_view_controller)
+        self.history_controller.set_intercontroller_dependency(self.source_view_controller)
 
         self.list_controller.startup()
         self.source_view_controller.startup()
-        self.history_popover_controller.startup()
+        self.history_controller.startup()
 
     def _init_sourceview(self):
         log_main.debug("Initializing SourceView components and controllers")
@@ -63,7 +63,7 @@ class Handlers:
         history_popover = history_popover_builder.get_object("history_popover")
         history_popover.set_relative_to(self.history_popover_toggle_button)
         history_popover.connect("closed", self.history_popover_closed)
-        self.history_popover_controller = HistoryController(history_popover_builder)
+        self.history_controller = HistoryController(history_popover_builder)
 
     def shutdown(self, window, event):
         log_main.debug("Main Window Handlers shutdown")
@@ -115,13 +115,12 @@ class Handlers:
             log.debug("NoteRow selected: (%s) '%s'", row.note.note_id, row.note.title)
             self.source_view_controller.activate_note(row.note)
             self.history_popover_toggle_button.set_sensitive(True)
-            self.history_popover_controller.register_current_note(row.note)
 
     def toggle_history_popover(self, toggle_button):
         log.debug("History popover toggle button toggled: %s", toggle_button.get_active())
         if toggle_button.get_active() is True:
             log.debug("Showing history popover")
-            self.history_popover_controller.activate_history_view()
+            self.history_controller.activate_history_view()
 
     def history_popover_closed(self, history_popover):
         log.debug("History popover closed")
