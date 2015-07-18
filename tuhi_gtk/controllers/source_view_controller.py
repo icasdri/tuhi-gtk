@@ -57,7 +57,7 @@ class SourceViewController(object):
             if self.checker_id is not None:
                 log.debug("Detaching activity + inactivity checker")
                 GObject.source_remove(self.checker_id)
-            log.ui.debug("Disabling SourceView")
+            log.debug("Disabling SourceView")
             self.source_view.set_sensitive(False)
             self.source_view.hide()
             return
