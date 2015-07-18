@@ -51,8 +51,9 @@ class SourceViewController(object):
         self.save_current_note()
 
     def activate_note(self, note):
+        self.save_current_note()
+
         if note is None:
-            self.save_current_note()
             self.current_note = None
             if self.checker_id is not None:
                 log.debug("Detaching activity + inactivity checker")
@@ -63,6 +64,7 @@ class SourceViewController(object):
             return
 
         log.debug("Activating Note: (%s) '%s'", note.note_id, note.title)
+        self.current_note = note
         content = note.get_head_content()
         self.activate_note_content(content)
 
@@ -70,7 +72,6 @@ class SourceViewController(object):
             log.debug("Attaching activity + inactivity checker")
             self.checker_id = GObject.timeout_add(BUFFER_ACTIVITY_CHECKERS_RESOLUTION, self.checker_callback)
 
-        self.current_note = note
         self.source_view.set_sensitive(True)
         self.source_view.show()
 
@@ -79,8 +80,6 @@ class SourceViewController(object):
             return
 
         log.debug("Activating Note Content: %s", content.note_content_id if content is not None else "None")
-
-        self.save_current_note()
         self.current_note_content = content
 
         if content is not None:
@@ -148,7 +147,7 @@ class SourceViewController(object):
         old_content = self.current_note_content
 
         old_data = old_content.data if old_content is not None else ""
-        new_data = self.current_buffer.props.text
+        new_data = self.current_buffer.props.text if self.current_buffer is not None else ""
 
         if new_data != old_data:
             log.info("Saving note: (%s) '%s'", note.note_id, note.title)
@@ -160,6 +159,7 @@ class SourceViewController(object):
                 old_content.data = new_data
                 db_session.commit()
 
+            self.current_note_content = self.current_note.get_head_content()
             self.list_controller.mark_note(note, "saved")
 
         if old_content is not None and old_content.note_content_id not in self.session_contents:
