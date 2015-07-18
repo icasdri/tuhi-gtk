@@ -34,7 +34,7 @@ class HistoryContentListController(ModelListController):
 
     @staticmethod
     def _item_id(note_content):
-        return note_content.note_content_id
+        return note_content.note_content_id if note_content is not None else None
 
     def _create_row(self, note_content):
         hc_row = HistoryContentRow.get_history_content_row(note_content)

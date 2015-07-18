@@ -61,7 +61,7 @@ class NoteListController(ModelListController):
 
     @staticmethod
     def _item_id(note):
-        return note.note_id
+        return note.note_id if note is not None else None
 
     def _create_row(self, note):
         noterow = NoteRow.get_note_row(note)
