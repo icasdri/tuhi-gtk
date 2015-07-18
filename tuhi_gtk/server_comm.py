@@ -87,7 +87,7 @@ class ServerAccessPoint(object):
 
             # Recalculate date_content_modified on Note instances
             for note_id in {nc["note_id"] for nc in data["note_contents"]}:
-                note_store.get(note_id).get_head_content()
+                note_store.get(note_id).refresh_title()
 
             kv_store["LAST_PULL_DATE"] = get_current_date()
 

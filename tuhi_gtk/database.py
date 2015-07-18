@@ -48,7 +48,8 @@ def config_database():
     else:
         for note in Note.non_deleted().all():
             log.debug("Recalculating date_content_modified for: (%s) '%s'", note.note_id, note.title)
-            note.get_head_content()
+            note.refresh_title()
+            # note.get_head_content()
 
 
 TYPE_LOOKUP = {
@@ -155,7 +156,7 @@ class Note(Base):
         note_change_tracker.register(self)
 
     def serialize(self):
-        return directly_serialize(self, ("note_id", "title", "deleted", "date_modified"))
+        return directly_serialize(self, ("note_id", "deleted", "date_modified"))
 
     def update(self, serialized_dict):
         for field in ("title", "deleted", "date_modified"):
@@ -170,6 +171,16 @@ class Note(Base):
                 self.date_content_modified = note_content.date_created
                 db_session.commit()
         return note_content
+
+    def refresh_title(self):
+        content = self.get_head_content()
+        if content is not None:
+            new_title = content.get_title()
+            if self.title != new_title:
+                self.title = new_title
+                db_session.commit()
+            return new_title, content
+        return self.title, content
 
     @classmethod
     def deserialize(cls, serialized_dict):
@@ -199,6 +210,9 @@ class NoteContent(Base):
             self.date_created = get_current_date()
             note_content_notonserver_tracker.register(self)
         super(NoteContent, self).__init__(**kwargs)
+
+    def get_title(self):
+        return self.data.partition("\n")[0]
 
     def serialize(self):
         s = directly_serialize(self, ("note_content_id", "data", "date_created"))

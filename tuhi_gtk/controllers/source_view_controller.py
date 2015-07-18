@@ -159,7 +159,7 @@ class SourceViewController(object):
                 old_content.data = new_data
                 db_session.commit()
 
-            self.current_note_content = self.current_note.get_head_content()
+            title, self.current_note_content = self.current_note.refresh_title()
             self.list_controller.mark_note(note, "saved")
 
         if old_content is not None and old_content.note_content_id not in self.session_contents:
