@@ -119,6 +119,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         <child>
                             <object class="GtkToggleButton" id="history_popover_toggle_button">
                                 <property name="image">icon_history_details</property>
+                                <property name="sensitive">false</property>
                                 <signal name="toggled" handler="toggle_history_popover"/>
                             </object>
                             <packing>
