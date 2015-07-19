@@ -173,10 +173,13 @@ class Note(Base):
         return note_content
 
     def refresh_title(self):
+        log.debug("Refreshing Title for: (%s) '%s'", self.note_id, self.title)
         content = self.get_head_content()
         if content is not None:
             new_title = content.get_title()
-            if self.title != new_title:
+            if new_title.strip() == "":
+                self.title = "Untitled Note"
+            elif self.title != new_title:
                 self.title = new_title
                 db_session.commit()
             return new_title, content
