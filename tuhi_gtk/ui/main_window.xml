@@ -20,17 +20,16 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 <interface>
     <requires lib="gtk+" version="3.12"/>
     <object class="GtkImage" id="icon_new_note">
-        <!--<property name="icon_name">document-new-symbolic</property>-->
         <property name="icon_name">edit-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_new_note_fallback">
+        <property name="icon_name">document-new-symbolic</property>
     </object>
     <object class="GtkImage" id="icon_sync_notes">
         <property name="icon_name">emblem-synchronizing-symbolic</property>
     </object>
     <object class="GtkImage" id="icon_search">
         <property name="icon_name">system-search-symbolic</property>
-    </object>
-    <object class="GtkImage" id="icon_note_props">
-        <property name="icon_name">edit-symbolic</property>
     </object>
     <object class="GtkImage" id="icon_history_details">
         <property name="icon_name">document-open-recent-symbolic</property>
@@ -101,7 +100,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         <property name="show-close-button">true</property>
                         <child>
                             <object class="GtkButton">
-                                <property name="image">icon_note_props</property>
+                                <property name="image">icon_new_note</property>
                                 <signal name="clicked" handler="new_note_clicked"/>
                             </object>
                             <packing>

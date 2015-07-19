@@ -134,6 +134,7 @@ def get_window():
     GObject.type_register(history_content_row.HistoryContentRow)
     log_main.debug("Building Main Window")
     builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
+    fallback_icons(builder)
     handler = Handlers(builder)
     log_main.debug("Binding Main Window Handlers")
     builder.connect_signals(handler)
@@ -141,3 +142,9 @@ def get_window():
     window.connect("delete-event", handler.shutdown)
     return window
 
+
+def fallback_icons(builder):
+    for icon_id in ("icon_new_note",):
+        icon = builder.get_object(icon_id)
+        if not Gtk.IconTheme.get_default().has_icon(icon.props.icon_name):
+            icon.props.icon_name = builder.get_object(icon_id + "_fallback").props.icon_name
