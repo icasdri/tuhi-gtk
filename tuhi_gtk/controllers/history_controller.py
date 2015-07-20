@@ -29,6 +29,7 @@ class HistoryController(Controller):
         self.history_popover_box = history_popover_builder.get_object("history_popover_box")
         self.hc_list = None
         self.hcl_controller = None
+        self.row_active_handler = None
 
     def set_intercontroller_dependency(self, source_view_controller):
         self.source_view_controller = source_view_controller
@@ -36,11 +37,13 @@ class HistoryController(Controller):
     def activate_history_view(self):
         if self.hc_list is not None:
             self.log.debug("Destroying previous history content list")
+            self.hc_list.disconnect(self.row_active_handler)
             self.hc_list.destroy()
 
         self.log.debug("Creating a new history content list")
         self.hc_list = get_history_content_list()
-        self.hc_list.connect("row_selected", self.history_content_row_selected)
+        self.row_active_handler = \
+            self.hc_list.connect("row_selected", self.history_content_row_selected)
         self.history_popover_box.add(self.hc_list)
         self.hc_list.show_all()
 
@@ -48,6 +51,7 @@ class HistoryController(Controller):
         if current_note is not None:
             self.hcl_controller = HistoryContentListController(self.hc_list, current_note)
             self.hcl_controller.startup()
+            self.source_view_controller.save_current_note()
             current_note_content = self.source_view_controller.get_current_note_content()
             self.hcl_controller.select_item(current_note_content)
 
