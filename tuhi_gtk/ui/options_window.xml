@@ -1,0 +1,165 @@
+<!--
+Copyright 2015 icasdri
+
+This file is part of tuhi-gtk.
+
+tuhi-gtk is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+tuhi-gtk is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<interface>
+    <object class="GtkWindow" id="options_window">
+        <property name="modal">true</property>
+        <property name="window-position">center-on-parent</property>
+        <property name="type-hint">dialog</property>
+        <signal name="delete-event" handler="option_window_closed"/>
+        <child>
+            <object class="GtkNotebook">
+                <child>
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">6</property>
+                        <property name="margin-top">11</property>
+                        <property name="margin-bottom">11</property>
+                        <property name="margin-start">11</property>
+                        <property name="margin-end">11</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Server Configuration</property>
+                                <property name="xalign">0</property>
+                                <attributes>
+                                    <attribute name="weight" value="bold"/>
+                                </attributes>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkGrid">
+                                <property name="margin-start">11</property>
+                                <property name="column-spacing">8</property>
+                                <property name="row-spacing">8</property>
+                                <property name="column-homogeneous">true</property>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Server URL</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">0</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkEntry">
+
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">0</property>
+                                        <property name="width">2</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Server Fingerprint</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">1</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkEntry">
+
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">1</property>
+                                        <property name="width">2</property>
+                                    </packing>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Authentication</property>
+                                <property name="xalign">0</property>
+                                <attributes>
+                                    <attribute name="weight" value="bold"/>
+                                </attributes>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkGrid">
+                                <property name="margin-start">11</property>
+                                <property name="column-spacing">8</property>
+                                <property name="row-spacing">8</property>
+                                <property name="column-homogeneous">true</property>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Username</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">0</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkEntry">
+
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">0</property>
+                                        <property name="width">2</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Password</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">1</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkEntry">
+
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">1</property>
+                                        <property name="width">2</property>
+                                    </packing>
+                                </child>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child type="tab">
+                    <object class="GtkLabel">
+                        <property name="label">Sync</property>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <child type="titlebar">
+            <object class="GtkHeaderBar" id="headerbar">
+                <property name="title">Preferences</property>
+                <property name="show_close_button">True</property>
+            </object>
+        </child>
+    </object>
+</interface>
