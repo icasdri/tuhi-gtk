@@ -1,0 +1,30 @@
+<interface>
+    <object class="GtkPopover" id="options_popover">
+        <child>
+            <object class="GtkBox" id="options_popover_box">
+                <property name="orientation">vertical</property>
+                <property name="margin-top">7</property>
+                <property name="margin-bottom">7</property>
+                <property name="margin-start">7</property>
+                <property name="margin-end">7</property>
+                <property name="width-request">150</property>
+                <child>
+                    <object class="GtkButton" id="preferences_option_button">
+                        <style>
+                            <class name="menuitem"/>
+                        </style>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="margin-start">4</property>
+                                <property name="xalign">0</property>
+                                <property name="label">Preferences</property>
+                            </object>
+                        </child>
+                        <signal name="clicked" handler="preferences_option_button_clicked"/>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <signal name="closed" handler="options_popover_closed"/>
+    </object>
+</interface>
