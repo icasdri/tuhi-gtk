@@ -18,6 +18,11 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
     <object class="GtkListBox" id="history_content_list">
-
+        <child type="placeholder">
+            <object class="GtkLabel" id="history_empty_label">
+                <property name="label">No history yet</property>
+                <property name="visible">true</property>
+            </object>
+        </child>
     </object>
 </interface>
