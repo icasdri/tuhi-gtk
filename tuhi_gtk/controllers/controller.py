@@ -28,3 +28,22 @@ class Controller(LogInjectedObject):
 
     def shutdown(self):
         pass
+
+
+class ActivatableViewController(Controller):
+    was_activated_before = False
+
+    def view_activate(self):
+        if not self.was_activated_before:
+            self.do_first_view_activate()
+            self.was_activated_before = True
+        else:
+            self.do_view_activate()
+
+    def do_first_view_activate(self):
+        # Initialize your own builder and widgets here (this may change to adding to a passed-in builder)
+        # Or if you have nothing to initialize. Leave this unimplemented.
+        self.do_view_activate()
+
+    def do_view_activate(self):
+        pass
