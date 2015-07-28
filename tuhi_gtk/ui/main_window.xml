@@ -40,7 +40,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="GtkImage" id="icon_menu">
         <property name="icon_name">open-menu-symbolic</property>
     </object>
-    <object class="GtkWindow" id="main_window">
+    <object class="GtkApplicationWindow" id="main_window">
         <property name="default-width">970</property>
         <property name="default-height">680</property>
         <!--<property name="default-width">850</property>-->
@@ -108,7 +108,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                             </packing>
                         </child>
                         <child>
-                            <object class="GtkButton">
+                            <object class="GtkToggleButton" id="options_popover_toggle_button">
                                 <property name="image">icon_menu</property>
                             </object>
                             <packing>
