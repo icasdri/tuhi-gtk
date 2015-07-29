@@ -153,6 +153,270 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         <property name="label">Sync</property>
                     </object>
                 </child>
+                <child>
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">6</property>
+                        <property name="margin-top">11</property>
+                        <property name="margin-bottom">11</property>
+                        <property name="margin-start">11</property>
+                        <property name="margin-end">11</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Autosave</property>
+                                <property name="xalign">0</property>
+                                <attributes>
+                                    <attribute name="weight" value="bold"/>
+                                </attributes>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkBox">
+                                <property name="margin-start">18</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Autosave after</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="pack-type">start</property>
+                                        <property name="expand">false</property>
+                                        <property name="fill">false</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkBox">
+                                        <property name="spacing">6</property>
+                                        <child>
+                                            <object class="GtkSpinButton">
+
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                        <child>
+                                            <object class="GtkLabel">
+                                                <property name="label">seconds of inactivity.</property>
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                    </object>
+                                    <packing>
+                                        <property name="pack-type">start</property>
+                                        <property name="expand">false</property>
+                                        <property name="fill">false</property>
+                                    </packing>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkBox">
+                                <property name="margin-start">18</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Autosave after</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="pack-type">start</property>
+                                        <property name="expand">false</property>
+                                        <property name="fill">false</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkBox">
+                                        <property name="spacing">6</property>
+                                        <child>
+                                            <object class="GtkSpinButton">
+
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                        <child>
+                                            <object class="GtkLabel">
+                                                <property name="label">seconds of continuous activity.</property>
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                    </object>
+                                    <packing>
+                                        <property name="pack-type">start</property>
+                                        <property name="expand">false</property>
+                                        <property name="fill">false</property>
+                                    </packing>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Autosync</property>
+                                <property name="xalign">0</property>
+                                <attributes>
+                                    <attribute name="weight" value="bold"/>
+                                </attributes>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkBox">
+                                <property name="margin-start">18</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Autosync after</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="pack-type">start</property>
+                                        <property name="expand">false</property>
+                                        <property name="fill">false</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkBox">
+                                        <property name="spacing">6</property>
+                                        <child>
+                                            <object class="GtkSpinButton">
+
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                        <child>
+                                            <object class="GtkLabel">
+                                                <property name="label">seconds.</property>
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                    </object>
+                                    <packing>
+                                        <property name="pack-type">start</property>
+                                        <property name="expand">false</property>
+                                        <property name="fill">false</property>
+                                    </packing>
+                                </child>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child type="tab">
+                    <object class="GtkLabel">
+                        <property name="label">Timing</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">6</property>
+                        <property name="margin-top">11</property>
+                        <property name="margin-bottom">11</property>
+                        <property name="margin-start">11</property>
+                        <property name="margin-end">11</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Editor</property>
+                                <property name="xalign">0</property>
+                                <attributes>
+                                    <attribute name="weight" value="bold"/>
+                                </attributes>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkGrid">
+                                <property name="margin-start">17</property>
+                                <property name="column-spacing">12</property>
+                                <property name="row-spacing">8</property>
+                                <!--<property name="column-homogeneous">true</property>-->
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Editor Display Font</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">0</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkFontButton">
+
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">0</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Editor Border Width</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">1</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkBox">
+                                        <property name="spacing">4</property>
+                                        <child>
+                                            <object class="GtkSpinButton">
+
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                        <child>
+                                            <object class="GtkLabel">
+                                                <property name="label">px</property>
+                                            </object>
+                                            <packing>
+                                                <property name="pack-type">start</property>
+                                                <property name="expand">false</property>
+                                                <property name="fill">false</property>
+                                            </packing>
+                                        </child>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">1</property>
+                                    </packing>
+                                </child>
+                            </object>
+                        </child>
+                    </object>
+                </child>
+                <child type="tab">
+                    <object class="GtkLabel">
+                        <property name="label">Editor</property>
+                    </object>
+                </child>
             </object>
         </child>
         <child type="titlebar">
