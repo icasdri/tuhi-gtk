@@ -20,7 +20,9 @@ from tuhi_gtk import note_row_view, history_content_row
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.database import Note, db_session
-from tuhi_gtk.controllers import NoteListController, SourceViewController, HistoryController
+from tuhi_gtk.controllers import \
+    NoteListController, SourceViewController, HistoryController, \
+    OptionsController, OptionsPopoverController
 
 log_main = get_log_for_prefix_tuple(("main",))
 log = get_log_for_prefix_tuple(("ui", "handler"))
@@ -38,9 +40,11 @@ class Handlers:
         self._init_sourceview()
         self._init_notelist()
         self._init_history_popover()
+        self._init_options()
 
         self.source_view_controller.set_intercontroller_dependency(self.list_controller)
         self.history_controller.set_intercontroller_dependency(self.source_view_controller)
+        self.options_popover_controller.set_intercontroller_dependency(self.options_controller)
 
         self.list_controller.startup()
         self.source_view_controller.startup()
@@ -64,6 +68,11 @@ class Handlers:
         history_popover.set_relative_to(self.history_popover_toggle_button)
         history_popover.connect("closed", self.history_popover_closed)
         self.history_controller = HistoryController(history_popover_builder)
+
+    def _init_options(self):
+        log_main.debug("Initializing Options Menu and Controller")
+        self.options_popover_controller = OptionsPopoverController(self.builder.get_object("options_popover_toggle_button"))
+        self.options_controller = OptionsController(self.builder.get_object("main_window"), self.source_view)
 
     def shutdown(self, window, event):
         log_main.debug("Main Window Handlers shutdown")
