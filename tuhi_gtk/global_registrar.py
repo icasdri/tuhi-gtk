@@ -16,6 +16,9 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import GObject, Gtk
+from tuhi_gtk.app_logging import get_log_for_prefix_tuple
+
+log = get_log_for_prefix_tuple(("global_r",))
 
 class GlobalRegistrar(GObject.Object):
     __gsignals__ = {
@@ -33,6 +36,15 @@ class GlobalRegistrar(GObject.Object):
     def __init__(self):
         GObject.Object.__init__(self)
         GObject.type_register(type(self))
+        self.conroller_types = set()
+
+    def instance_register(self, controller):
+        GObject.Object.__init__(controller)
+        type_ = type(controller)
+        if type_ not in self.conroller_types:
+            log.debug("Registering GObject type %s", type_)
+            GObject.type_register(type_)
+            self.conroller_types.add(type_)
 
 
 class TestTestTest:
