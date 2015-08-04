@@ -14,11 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
-from gi.repository import GObject, Gtk
-from tuhi_gtk.config import BUFFER_ACTIVITY_CHECKERS_RESOLUTION, BUFFER_ACTIVITY_TARGET_COUNT, \
-    BUFFER_INACTIVITY_TARGET_COUNT, USE_SESSION_BASED_AUTOSAVE, SESSION_TIMEOUT
+from gi.repository import GObject, Gtk, GtkSource
+from tuhi_gtk.config import BUFFER_ACTIVITY_CHECKERS_RESOLUTION, USE_SESSION_BASED_AUTOSAVE, SESSION_TIMEOUT
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.database import db_session, NoteContent
+from tuhi_gtk.database import db_session, NoteContent, kv_store
 
 log = get_log_for_prefix_tuple(("co", "srcview"))
 
@@ -83,7 +82,10 @@ class SourceViewController(object):
         self.current_note_content = content
 
         if content is not None:
-            self.current_buffer = Gtk.TextBuffer(text=content.data)
+            self.current_buffer = GtkSource.Buffer()
+            self.current_buffer.begin_not_undoable_action()
+            self.current_buffer.set_text(content.data)
+            self.current_buffer.end_not_undoable_action()
         else:
             self.current_buffer = Gtk.TextBuffer()
 
@@ -103,14 +105,14 @@ class SourceViewController(object):
     def checker_callback(self):
         # print("Checker Callback: activity %d | inactivity %d" % (self.current.activity_count, self.current.inactivity_count))
         if self.inactivity_count > 0:
-            if self.inactivity_count >= BUFFER_INACTIVITY_TARGET_COUNT:
+            if self.inactivity_count >= kv_store["AUTOSAVE_INACTIVITY_INTERVAL"]:
                 self.inactivity_count = 0
                 self.activity_count = 0
                 self.inactivity_endpoint()
             else:
                 self.inactivity_count += 1
         if self.activity_count > 0:
-            if self.activity_count >= BUFFER_ACTIVITY_TARGET_COUNT:
+            if self.activity_count >= kv_store["AUTOSAVE_CONTINUOUS_ACTIVITY_INTERVAL"]:
                 self.activity_count = 0
                 self.inactivity_count = 0
                 self.activity_endpoint()
