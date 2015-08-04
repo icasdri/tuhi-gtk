@@ -24,28 +24,8 @@ from tuhi_gtk.controllers.controller import WindowController
 log = get_log_for_prefix_tuple(("w", "main"))
 
 class MainWindowController(WindowController):
-    # __gsignals__ = {
-    #     "notify_current_note": (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
-    #     "notify_current_note_content": (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
-    # }
     current_note = GObject.Property(type=object)
     current_note_content = GObject.Property(type=object)
-
-    # __gproperties__ = {
-    #     "current_note": (GObject.TYPE_PYOBJECT, "current note", "current note", GObject.PARAM_READWRITE),
-    #     "current_note_content": (GObject.TYPE_PYOBJECT, "current note content", "current note content", GObject.PARAM_READWRITE)
-    # }
-    #
-    # property_dict = {
-    #     "current_note": None,
-    #     "current_note_content": None
-    # }
-    #
-    # def do_get_property(self, property):
-    #     return self.property_dict[property.name]
-    #
-    # def do_set_property(self, property, value):
-    #     self.property_dict[property.name] = value
 
     def do_init_subcontrollers(self):
         pass
