@@ -18,12 +18,39 @@
 from gi.repository import GObject, Gtk, GtkSource
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.util import ignore_all_args_function
 from tuhi_gtk.controllers.controller import WindowController
 
 log = get_log_for_prefix_tuple(("w", "main"))
 
 class MainWindowController(WindowController):
-    def do_init(self):
+    # __gsignals__ = {
+    #     "notify_current_note": (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
+    #     "notify_current_note_content": (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
+    # }
+    current_note = GObject.Property(type=object)
+    current_note_content = GObject.Property(type=object)
+
+    # __gproperties__ = {
+    #     "current_note": (GObject.TYPE_PYOBJECT, "current note", "current note", GObject.PARAM_READWRITE),
+    #     "current_note_content": (GObject.TYPE_PYOBJECT, "current note content", "current note content", GObject.PARAM_READWRITE)
+    # }
+    #
+    # property_dict = {
+    #     "current_note": None,
+    #     "current_note_content": None
+    # }
+    #
+    # def do_get_property(self, property):
+    #     return self.property_dict[property.name]
+    #
+    # def do_set_property(self, property, value):
+    #     self.property_dict[property.name] = value
+
+    def do_init_subcontrollers(self):
+        pass
+
+    def do_first_view_activate(self):
         log.debug("Registering GObject types for MainWindow")
         GObject.type_register(GtkSource.View)
         log.debug("Building Main Window")
@@ -32,18 +59,17 @@ class MainWindowController(WindowController):
         self.side_hb = self.get_object("side_hb")
         self._hb_synced_width = 0
         log.debug("Binding Main Window Handlers")
-        self.builder.connect_signals(self)
+        # self.builder.connect_signals(self)
         self.window = self.get_object("main_window")
-
-    def do_init_subcontrollers(self):
-        pass
-
-    def do_first_view_activate(self):
+        self.window.connect("delete-event", ignore_all_args_function(self.shutdown))
         self.fallback_icons()
-        self.window.show_all()
 
     def do_view_activate(self):
-        pass
+        self.window.show_all()
+
+    def do_shutdown(self):
+        log.debug("Main Window Controller Shutdown")
+        self.global_r.emit("application_shutdown", "Main Window Closed")
 
     def synchronize_hb_size_callback(self, widget, allocation):
         if allocation.width != self._hb_synced_width:
