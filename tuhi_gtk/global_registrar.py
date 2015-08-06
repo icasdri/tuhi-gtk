@@ -16,10 +16,8 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import GObject, Gtk
-from sqlalchemy import event
 from tuhi_gtk.util import ignore_sender_function
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.database import db_session, Note, NoteContent
 
 log = get_log_for_prefix_tuple(("global_r",))
 
@@ -56,35 +54,3 @@ class GlobalRegistrar(GObject.Object):
         log.debug("Application Shutting Down for reason: %s", reason)
         Gtk.main_quit()
 
-
-class TestTestTest:
-    def __init__(self, global_r):
-        self.global_r = global_r
-        self.window = Gtk.Window()
-        self.window.props.title = "My Window"
-        self.window.set_default_size(50, 50)
-        self.button = Gtk.Button()
-        self.button.props.label = "Click Me!"
-        self.button.connect("clicked", self.button_clicked)
-        self.window.add(self.button)
-        self.window.show_all()
-
-    def button_clicked(self, *pos, **kwargs):
-        print("Button clicked!")
-        self.global_r.emit("note_sync_begin", "my-special-note-id")
-
-
-class SuperSuperTest:
-    def __init__(self, global_r):
-        self.global_r = global_r
-        self.global_r.connect("note_sync_begin", self.sync_began)
-
-    def sync_began(self, dafu, note_id):
-        print(dafu)
-        print("Sync has begun for note: ", note_id)
-
-if __name__ == "__main__":
-    global_r = GlobalRegistrar()
-    TestTestTest(global_r)
-    SuperSuperTest(global_r)
-    Gtk.main()
