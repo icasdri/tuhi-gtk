@@ -138,6 +138,7 @@ class Note(Base):
     __tablename__ = 'notes'
     note_id = Column(CHAR(36), primary_key=True)
     title = Column(String)
+    # Use a NoteContent with type = deleted
     deleted = Column(Boolean, default=False)
     date_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
     date_content_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
@@ -202,6 +203,7 @@ class NoteContent(Base):
     __tablename__ = 'note_contents'
     note_content_id = Column(CHAR(36), primary_key=True)
     note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
+    type = Column(Integer)
     data = Column(Text)
     date_created = Column(Integer, index=True, default=get_current_date)  # Seconds from epoch
 
