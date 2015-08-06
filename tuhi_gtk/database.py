@@ -203,7 +203,7 @@ class NoteContent(Base):
     __tablename__ = 'note_contents'
     note_content_id = Column(CHAR(36), primary_key=True)
     note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
-    type = Column(Integer)
+    type = Column(Integer)  # used currently for deletion flags
     data = Column(Text)
     date_created = Column(Integer, index=True, default=get_current_date)  # Seconds from epoch
 
