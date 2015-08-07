@@ -41,6 +41,13 @@ BUFFER_ACTIVITY_TARGET_COUNT = 30
 
 USE_SESSION_BASED_AUTOSAVE = False
 
+REASON_USER = "user"
+REASON_SYNC = "sync"
+
+SYNC_ACTION_BEGIN = "begin"
+SYNC_ACTION_SUCCESS = "success"
+SYNC_ACTION_FAILURE = "failure"
+
 def get_ui_file(ui_name):
     return resource_filename(__name__, os.path.join(UI_BASEDIR, ui_name + UI_EXTENSION))
 
