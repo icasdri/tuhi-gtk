@@ -35,3 +35,14 @@ def property_change_function(func):
         return func(prop_value)
     return new_func
 
+
+def underscore_camelcase(camel_str):
+    last_index = 0
+    result = ""
+    for i, l in enumerate(camel_str):
+        if i == 0:
+            continue
+        if l.isupper():
+            result += camel_str[last_index:i].lower() + "_"
+            last_index = i
+    return result + camel_str[last_index:].lower()
