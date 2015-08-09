@@ -17,6 +17,26 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
+    <object class="GtkAdjustment" id="autosave_inactivity_interval_adjustment">
+        <property name="lower">0</property>
+        <property name="upper">600</property>
+        <property name="step_increment">1</property>
+    </object>
+    <object class="GtkAdjustment" id="autosave_continuous_activity_interval_adjustment">
+        <property name="lower">0</property>
+        <property name="upper">600</property>
+        <property name="step_increment">1</property>
+    </object>
+    <object class="GtkAdjustment" id="autosync_interval_adjustment">
+        <property name="lower">0</property>
+        <property name="upper">600</property>
+        <property name="step_increment">1</property>
+    </object>
+    <object class="GtkAdjustment" id="editor_border_width_adjustment">
+        <property name="lower">0</property>
+        <property name="upper">20</property>
+        <property name="step_increment">1</property>
+    </object>
     <object class="GtkWindow" id="options_window">
         <property name="modal">true</property>
         <property name="window-position">center-on-parent</property>
@@ -43,7 +63,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         </child>
                         <child>
                             <object class="GtkGrid">
-                                <property name="margin-start">11</property>
+                                <!--<property name="margin-start">5</property>-->
                                 <property name="column-spacing">8</property>
                                 <property name="row-spacing">8</property>
                                 <property name="column-homogeneous">true</property>
@@ -58,7 +78,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </packing>
                                 </child>
                                 <child>
-                                    <object class="GtkEntry">
+                                    <object class="GtkEntry" id="sync_url_entry">
 
                                     </object>
                                     <packing>
@@ -78,7 +98,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </packing>
                                 </child>
                                 <child>
-                                    <object class="GtkEntry">
+                                    <object class="GtkEntry" id="sync_server_fingerprint_entry">
 
                                     </object>
                                     <packing>
@@ -100,7 +120,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                         </child>
                         <child>
                             <object class="GtkGrid">
-                                <property name="margin-start">11</property>
+                                <property name="margin-start">5</property>
                                 <property name="column-spacing">8</property>
                                 <property name="row-spacing">8</property>
                                 <property name="column-homogeneous">true</property>
@@ -115,7 +135,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </packing>
                                 </child>
                                 <child>
-                                    <object class="GtkEntry">
+                                    <object class="GtkEntry" id="sync_username_entry">
 
                                     </object>
                                     <packing>
@@ -135,8 +155,8 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </packing>
                                 </child>
                                 <child>
-                                    <object class="GtkEntry">
-
+                                    <object class="GtkEntry" id="sync_password_entry">
+                                        <property name="visibility">false</property>
                                     </object>
                                     <packing>
                                         <property name="left-attach">1</property>
@@ -189,8 +209,8 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     <object class="GtkBox">
                                         <property name="spacing">6</property>
                                         <child>
-                                            <object class="GtkSpinButton">
-
+                                            <object class="GtkSpinButton" id="autosave_inactivity_interval_spinbutton">
+                                                <property name="adjustment">autosave_inactivity_interval_adjustment</property>
                                             </object>
                                             <packing>
                                                 <property name="pack-type">start</property>
@@ -236,8 +256,8 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     <object class="GtkBox">
                                         <property name="spacing">6</property>
                                         <child>
-                                            <object class="GtkSpinButton">
-
+                                            <object class="GtkSpinButton" id="autosave_continuous_activity_interval_spinbutton">
+                                                <property name="adjustment">autosave_continuous_activity_interval_adjustment</property>
                                             </object>
                                             <packing>
                                                 <property name="pack-type">start</property>
@@ -279,7 +299,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                 <property name="spacing">8</property>
                                 <child>
                                     <object class="GtkLabel">
-                                        <property name="label">Autosync after</property>
+                                        <property name="label">Autosync</property>
                                         <property name="xalign">1</property>
                                     </object>
                                     <packing>
@@ -292,8 +312,8 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     <object class="GtkBox">
                                         <property name="spacing">6</property>
                                         <child>
-                                            <object class="GtkSpinButton">
-
+                                            <object class="GtkSpinButton" id="autosync_interval_spinbutton">
+                                                <property name="adjustment">autosync_interval_adjustment</property>
                                             </object>
                                             <packing>
                                                 <property name="pack-type">start</property>
@@ -303,7 +323,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                         </child>
                                         <child>
                                             <object class="GtkLabel">
-                                                <property name="label">seconds.</property>
+                                                <property name="label">seconds after a save.</property>
                                             </object>
                                             <packing>
                                                 <property name="pack-type">start</property>
@@ -352,7 +372,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                 <!--<property name="column-homogeneous">true</property>-->
                                 <child>
                                     <object class="GtkLabel">
-                                        <property name="label">Editor Display Font</property>
+                                        <property name="label">Use Custom Display Font</property>
                                         <property name="xalign">1</property>
                                     </object>
                                     <packing>
@@ -361,12 +381,45 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </packing>
                                 </child>
                                 <child>
-                                    <object class="GtkFontButton">
-
+                                    <object class="GtkBox">
+                                        <child>
+                                            <object class="GtkSwitch" id="editor_use_custom_font_switch">
+                                                <signal name="notify::active" handler="editor_use_custom_font_switch_toggled"/>
+                                            </object>
+                                        </child>
                                     </object>
                                     <packing>
                                         <property name="left-attach">1</property>
                                         <property name="top-attach">0</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkLabel">
+                                        <property name="label">Editor Display Font</property>
+                                        <property name="xalign">1</property>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">0</property>
+                                        <property name="top-attach">1</property>
+                                    </packing>
+                                </child>
+                                <child>
+                                    <object class="GtkBox" id="editor_font_selection_box">
+                                        <child>
+                                            <object class="GtkFontButton" id="editor_font_selection_button">
+
+                                            </object>
+                                        </child>
+                                        <child>
+                                            <object class="GtkButton" id="editor_font_selection_placeholder">
+                                                <property name="label">System Default</property>
+                                                <property name="sensitive">false</property>
+                                            </object>
+                                        </child>
+                                    </object>
+                                    <packing>
+                                        <property name="left-attach">1</property>
+                                        <property name="top-attach">1</property>
                                     </packing>
                                 </child>
                                 <child>
@@ -376,15 +429,15 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </object>
                                     <packing>
                                         <property name="left-attach">0</property>
-                                        <property name="top-attach">1</property>
+                                        <property name="top-attach">2</property>
                                     </packing>
                                 </child>
                                 <child>
                                     <object class="GtkBox">
                                         <property name="spacing">4</property>
                                         <child>
-                                            <object class="GtkSpinButton">
-
+                                            <object class="GtkSpinButton" id="editor_border_width_spinbutton">
+                                                <property name="adjustment">editor_border_width_adjustment</property>
                                             </object>
                                             <packing>
                                                 <property name="pack-type">start</property>
@@ -405,7 +458,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                                     </object>
                                     <packing>
                                         <property name="left-attach">1</property>
-                                        <property name="top-attach">1</property>
+                                        <property name="top-attach">2</property>
                                     </packing>
                                 </child>
                             </object>
