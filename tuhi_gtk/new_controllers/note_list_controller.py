@@ -17,7 +17,7 @@
 
 from tuhi_gtk.config import REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function
+from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function, property_change_function
 from tuhi_gtk.database import kv_store, Note, NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.note_row_view import NoteRow
@@ -43,6 +43,7 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
         self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
         self.initial_populate()
         self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
+        self.window.connect("notify::current-note", property_change_function(self.handle_window_current_note_change))
         last_note_selected = None
         if "LAST_NOTE_SELECTED" in kv_store:
             last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).first()
@@ -50,6 +51,10 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
             last_note_selected = Note.non_deleted().order_by(Note.date_content_modified.desc()).first()
         log.debug("Selecting last note selected")
         self.select_item(last_note_selected)
+
+    def handle_window_current_note_change(self, note):
+        if self.list.get_selected_row() != note:
+            self.select_item(note)
 
     def handle_new_note(self, note, reason):
         self.add_item(note)
