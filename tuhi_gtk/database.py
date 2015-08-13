@@ -170,7 +170,8 @@ class Note(Base):
         if note_content is not None:
             if self.date_content_modified < note_content.date_created:
                 self.date_content_modified = note_content.date_created
-                db_session.commit()
+            self.deleted = note_content.type in (NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE)
+            db_session.commit()
         return note_content
 
     def refresh_title(self):
@@ -198,6 +199,10 @@ class Note(Base):
     def non_deleted(cls):
         return cls.query.filter(Note.deleted == False)
 
+
+NC_TYPE_PERMA_DELETE = -2
+NC_TYPE_TRASHED = -10000000
+NC_TYPE_PLAIN = 10000000
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'
