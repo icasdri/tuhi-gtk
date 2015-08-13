@@ -45,9 +45,9 @@ class OptionsPopoverController(SubwindowInterfaceController):
         if toggle_button.get_active():
             self.view_activate()
 
-    def options_popover_closed(self, _):
+    def options_popover_closed(self, __):
         self.toggle_button.set_active(False)
 
-    def preferences_option_button_clicked(self, _):
+    def preferences_option_button_clicked(self, __):
         self.window.get_controller("options").view_activate()
         self.options_popover.hide()
