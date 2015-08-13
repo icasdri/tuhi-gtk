@@ -19,7 +19,7 @@ from gi.repository import GObject, Gtk, GtkSource
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.util import ignore_all_args_function
-from tuhi_gtk.controllers.controller import WindowController
+from tuhi_gtk.new_controllers import WindowController
 
 log = get_log_for_prefix_tuple(("w", "main"))
 
@@ -27,45 +27,23 @@ class MainWindowController(WindowController):
     current_note = GObject.Property(type=object)
     current_note_content = GObject.Property(type=object)
 
-    def do_init_subcontrollers(self):
-        pass
+    def do_init(self):
+        self._make_subcontrollers([
+            "MainWindowCosmeticsController",
+            "NoteListController",
+        ])
 
     def do_first_view_activate(self):
         log.debug("Registering GObject types for MainWindow")
         GObject.type_register(GtkSource.View)
         log.debug("Building Main Window")
         self.builder = Gtk.Builder.new_from_file(get_ui_file("main_window"))
-
-        self.side_hb = self.get_object("side_hb")
-        self._hb_synced_width = 0
-        log.debug("Binding Main Window Handlers")
-        # self.builder.connect_signals(self)
-        self.window = self.get_object("main_window")
-        self.window.connect("delete-event", ignore_all_args_function(self.shutdown))
-        self.fallback_icons()
+        self.get_object("main_window").connect("delete-event", ignore_all_args_function(self.shutdown))
 
     def do_view_activate(self):
-        self.window.show_all()
+        self.get_object("main_window").show_all()
 
     def do_shutdown(self):
         log.debug("Main Window Controller Shutdown")
         self.global_r.emit("application_shutdown", "Main Window Closed")
-
-    def synchronize_hb_size_callback(self, widget, allocation):
-        if allocation.width != self._hb_synced_width:
-            self.side_hb.set_size_request(allocation.width+2, -1)
-            # hb_alloc = self.side_hb.get_allocation()
-            # hb_alloc.width = allocation.width + 2
-            # self.side_hb.set_allocation(hb_alloc)
-            self._hb_synced_width = allocation.width
-            # TODO: TESTING ONLY: Debug size allocation print statements
-            log.debug("Width allocation: Listbox <-> HeaderBar: %d %d",
-                      allocation.width, self.side_hb.get_allocation().width)
-
-    def fallback_icons(self):
-        for icon_id in ("icon_new_note",):
-            icon = self.builder.get_object(icon_id)
-            if not Gtk.IconTheme.get_default().has_icon(icon.props.icon_name):
-                icon.props.icon_name = self.builder.get_object(icon_id + "_fallback").props.icon_name
-            pass
 
