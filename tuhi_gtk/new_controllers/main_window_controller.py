@@ -30,7 +30,9 @@ class MainWindowController(WindowController):
     def do_init(self):
         self._make_subcontrollers([
             "MainWindowCosmeticsController",
+            "SourceViewController",
             "NoteListController",
+            "NewNoteController"
         ])
 
     def do_first_view_activate(self):
