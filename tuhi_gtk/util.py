@@ -18,13 +18,14 @@
 # Wrappers for handling GObject callback signals with extra parameters
 
 def ignore_sender_function(func):
-    def new_func(sender, *pos):
+    # _ is sender var.
+    def new_func(_, *pos):
         func(*pos)
     return new_func
 
 
 def ignore_all_args_function(func):
-    def new_func(*pos):
+    def new_func(*_):
         func()
     return new_func
 
