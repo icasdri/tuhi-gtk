@@ -140,11 +140,11 @@ class SourceViewController(SubwindowInterfaceController):
 
         if new_data != old_data:
             log.info("Saving note: (%s) '%s'", note.note_id, note.title)
-            new_content = NoteContent(note=note, data=new_data)
+            new_content = NoteContent(note=note, data=new_data, type=10000000)
             db_session.add(new_content)
             db_session.commit()
 
-            title, self.current_note_content = self.current_note.refresh_title()
+            self.current_note_content = new_content
             self.global_r.emit("note_content_added", self.current_note_content, REASON_USER)
             self.window.current_note_content = self.current_note_content
             # self.global_r.emit("note-saved", note)

@@ -44,6 +44,7 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
         self.initial_populate()
         self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
         self.window.connect("notify::current-note", property_change_function(self.handle_window_current_note_change))
+        self.global_r.connect("note-metadata-changed", ignore_sender_function(self.handle_note_metadata_change))
         last_note_selected = None
         if "LAST_NOTE_SELECTED" in kv_store:
             last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).first()
@@ -55,6 +56,9 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
     def handle_window_current_note_change(self, note):
         if self.list.get_selected_row() != note:
             self.select_item(note)
+
+    def handle_note_metadata_change(self, note, reason):
+        self._get_row(note).refresh()
 
     def handle_new_note(self, note, reason):
         self.add_item(note)
