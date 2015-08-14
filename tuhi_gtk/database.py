@@ -47,9 +47,7 @@ def config_database():
         init_db()
     else:
         for note in Note.non_deleted().all():
-            log.debug("Recalculating date_content_modified for: (%s) '%s'", note.note_id, note.title)
-            note.refresh_title()
-            # note.get_head_content()
+            note.refresh_metadata()
 
 
 TYPE_LOOKUP = {
@@ -164,20 +162,22 @@ class Note(Base):
             setattr(self, field, serialized_dict[field])
 
     def get_head_content(self):
-        note_content = NoteContent.query.filter(NoteContent.note_id == self.note_id) \
-                                  .order_by(NoteContent.date_created.desc()) \
-                                  .first()
-        if note_content is not None:
-            if self.date_content_modified < note_content.date_created:
-                self.date_content_modified = note_content.date_created
-            self.deleted = note_content.type in (NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE)
-            db_session.commit()
-        return note_content
+        return NoteContent.query.filter(NoteContent.note_id == self.note_id) \
+                                .order_by(NoteContent.date_created.desc()) \
+                                .first()
 
-    def refresh_title(self):
-        log.debug("Refreshing Title for: (%s) '%s'", self.note_id, self.title)
+    def refresh_metadata(self):
+        log.debug("Refreshing metadata for: (%s) '%s'", self.note_id, self.title)
         content = self.get_head_content()
         if content is not None:
+            # date_content_modified recalculation
+            if self.date_content_modified < content.date_created:
+                self.date_content_modified = content.date_created
+
+            # deleted flag recalculation
+            self.deleted = content.type < 0 or content.type == NC_TYPE_PERMA_DELETE
+
+            # title recalculation
             new_title = content.get_title()
             if new_title.strip() == "":
                 self.title = "Untitled Note"
