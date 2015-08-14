@@ -29,6 +29,8 @@ class GlobalRegistrar(GObject.Object):
         # Reasons: user, sync
         "note_content_added": (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
         # Reasons: user, sync
+        "note_metadata_changed": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
+        # Metadata signal fired from logic here as a response to note_content_added signals
         "note_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
         # Action names: begin, success, failure
 
@@ -39,8 +41,20 @@ class GlobalRegistrar(GObject.Object):
         GObject.Object.__init__(self)
         GObject.type_register(type(self))
         self.connect("application_shutdown", ignore_sender_function(self.application_shutdown))
+        self.connect("note_content_added", ignore_sender_function(self.handle_note_content_added))
         # event.listen(db_session, "before_commit", self._db_changed_callback)
         self.conroller_types = set()
+
+    def handle_note_content_added(self, note_content, reason):
+        # Emit a note_metadata_changed signal if necessary
+        if note_content is not None:
+            note = note_content.note
+            if note_content.date_created >= note.date_content_modified:
+                if note_content.date_created > note.date_content_modified:
+                    #log.warn("The creator of a new note content was not diligent enough to refresh note metadata. Doing that now.")
+                    note.refresh_metadata()
+                log.debug("Firing a note_metadata_change signal")
+                self.emit("note_metadata_changed", note, reason)
 
     def instance_register(self, controller):
         GObject.Object.__init__(controller)
