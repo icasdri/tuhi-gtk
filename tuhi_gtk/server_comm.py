@@ -32,6 +32,23 @@ class ServerAccessPoint(object):
         self.pull()
         self.push()
 
+    def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker):
+        for serialized_data in serialized_data_blocks:
+            instance = note_store.get(serialized_data)
+            if instance is not None:
+                # I have a instance that has the same id as the one coming in.
+                if instance in notonserver_tracker:
+                    # There is a new instance on the server that conflicts with a new note I've made.
+                    # We are talking about different instances. Conflict with server. Must change id of notonserver instance
+                    old_id, new_id = model_store.rename_to_new_uuid(instance)
+                    note_notonserver_tracker.register_rename(old_id, new_id)
+                    model_store.add_new(serialized_data)
+                    # Otherwise, something is awry with server. Server should not send conflicting instances
+                    # (which are immutable) -- thus, I ignore the change
+            else:
+                # This is a new instance that I am unaware of.
+                model_store.add_new(serialized_data)
+
     def pull(self):
         try:
             params = {"after": str(kv_store["LAST_PULL_DATE"])}
@@ -45,40 +62,8 @@ class ServerAccessPoint(object):
             pass
         else:
             data = r.json()
-            for serialized_note in data["notes"]:
-                note = note_store.get(serialized_note)
-                if note is not None:
-                    # I have a note that has the same id as the one coming in.
-                    if note in note_notonserver_tracker:
-                        # There is a new note on the server that conflicts with a new note I've made.
-                        # We are talking about different notes. Conflict with server. Must change id of notonserver note
-                        old_id, new_id = note_store.rename_to_new_uuid(note)
-                        note_notonserver_tracker.register_rename(old_id, new_id)
-                        note_store.add_new(serialized_note)
-                    # Otherwise, something is awry with server. Server should not send conflicting NoteContents
-                    # (which are immutable) -- thus, I ignore the change
-                else:
-                    # This is a new note that I am unaware of.
-                    note_store.add_new(serialized_note)
-
-            for serialized_note_content in data["note_contents"]:
-                note_content = note_content_store.get(serialized_note_content)
-                if note_content is not None:
-                    # I have a note content that has same id as the one coming in.
-                    if note_content in note_content_notonserver_tracker:
-                        # This note content from the server conflicts with one that I've made but not pushed
-                        old_id, new_id = note_content_store.rename_to_new_uuid(note_content)
-                        note_content_notonserver_tracker.register_rename(old_id, new_id)
-                        note_content_store.add_new(serialized_note_content)
-                    # Otherwise, something is awry with server. Server should not send conflicting NoteContents
-                    # (which are immutable) -- thus, I ignore the change
-                else:
-                    # This is a new note content that I am unaware of.
-                    note_content_store.add_new(serialized_note_content)
-
-            # Recalculate date_content_modified on Note instances
-            for note_id in {nc["note_id"] for nc in data["note_contents"]}:
-                note_store.get(note_id).refresh_title()  # this is most likely NO LONGER necessary due to automatic handling in global_r as note_metadata_changed
+            self._merge_change(data["notes"], note_store, note_notonserver_tracker)
+            self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker)
 
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
