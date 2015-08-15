@@ -150,16 +150,11 @@ class Note(Base):
             note_notonserver_tracker.register(self)
         super(Note, self).__init__(**kwargs)
 
-    def register_change(self):
-        # Call this when making a change to this Note
-        self.date_modified = get_current_date()
-        note_change_tracker.register(self)
-
     def serialize(self):
         return directly_serialize(self, ("note_id", "deleted", "date_modified"))
 
     def update(self, serialized_dict):
-        for field in ("title", "deleted", "date_modified"):
+        for field in ("date_modified",):
             setattr(self, field, serialized_dict[field])
 
     def get_head_content(self):
