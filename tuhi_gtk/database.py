@@ -139,7 +139,7 @@ class Note(Base):
     title = Column(String)
     # Use a NoteContent with type = deleted
     deleted = Column(Boolean, default=False)
-    date_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
+    date_created = Column(Integer, index=True, nullable=False)  # Seconds from epoch
     date_content_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
 
     def __init__(self, external=False, **kwargs):
@@ -151,11 +151,7 @@ class Note(Base):
         super(Note, self).__init__(**kwargs)
 
     def serialize(self):
-        return directly_serialize(self, ("note_id", "deleted", "date_modified"))
-
-    def update(self, serialized_dict):
-        for field in ("date_modified",):
-            setattr(self, field, serialized_dict[field])
+        return directly_serialize(self, ("note_id", "date_created"))
 
     def get_head_content(self):
         return NoteContent.query.filter(NoteContent.note_id == self.note_id) \
@@ -221,7 +217,7 @@ class NoteContent(Base):
         return self.data.partition("\n")[0]
 
     def serialize(self):
-        s = directly_serialize(self, ("note_content_id", "data", "date_created"))
+        s = directly_serialize(self, ("note_content_id", "type", "data", "date_created"))
         s["note"] = self.note_id
         return s
 
