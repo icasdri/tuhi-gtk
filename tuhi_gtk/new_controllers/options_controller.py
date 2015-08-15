@@ -36,6 +36,20 @@ DEFAULT_PREFERENCES_VALUES = {
     "EDITOR_BORDER_WIDTH": 5
 }
 
+# dict mapping preference name -> (ui_object_id, setter_name, getter_name, native_type, wanted_type)
+RENDER_RELATIONSHIPS = {
+    "SYNCSERVER_URL": ("sync_url_entry", "set_text", "get_text", None, None),
+    "SYNCSERVER_FINGERPRINT": ("sync_server_fingerprint_entry", "set_text", "get_text", None, None),
+    "SYNCSERVER_USERNAME": ("sync_username_entry", "set_text", "get_text", None, None),
+    "SYNCSERVER_PASSWORD": ("sync_password_entry", "set_text", "get_text", None, None),
+    "AUTOSAVE_INACTIVITY_INTERVAL": ("autosave_inactivity_interval_spinbutton", "set_value", "get_value", float, int),
+    "AUTOSAVE_CONTINUOUS_ACTIVITY_INTERVAL": ("autosave_continuous_activity_interval_spinbutton", "set_value", "get_value", float, int),
+    "AUTOSYNC_AFTER_SAVE_INTERVAL": ("autosync_interval_spinbutton", "set_value", "get_value", float, int),
+    "EDITOR_USE_CUSTOM_FONT": ("editor_use_custom_font_switch", "props.active", "props.active", None, None),
+    "EDITOR_DISPLAY_FONT": ("editor_font_selection_button", "set_font_name", "get_font_name", None, None),
+    "EDITOR_BORDER_WIDTH": ("editor_border_width_spinbutton", "set_value", "get_value", float, int)
+}
+
 class OptionsController(SubwindowInterfaceController):
     def do_init(self):
         self.window.register_controller("options", self)
@@ -74,6 +88,24 @@ class OptionsController(SubwindowInterfaceController):
             if not first_call:
                 box.add(placeholder)
 
+    def _ui_set(self, pref, val):
+        ui_object_id, setter_name, _, native_type, _ = RENDER_RELATIONSHIPS[pref]
+        target_val = native_type(val) if native_type is not None else val
+        ui_object = self.get_object(ui_object_id)
+        if setter_name.startswith("props."):
+            setattr(ui_object.props, setter_name.split(".")[1], target_val)
+        else:
+            getattr(ui_object, setter_name)(target_val)
+
+    def _ui_get(self, pref):
+        ui_object_id, _, getter_name, _, wanted_type = RENDER_RELATIONSHIPS[pref]
+        ui_object = self.get_object(ui_object_id)
+        if getter_name.startswith("props."):
+            raw_val = getattr(ui_object.props, getter_name.split(".")[1])
+        else:
+            raw_val = getattr(ui_object, getter_name)()
+        return wanted_type(raw_val) if wanted_type is not None else raw_val
+
     def init_default_preferences_in_db(self):
         log.debug("Initializing preferences with default values in database.")
         for pref_name in DEFAULT_PREFERENCES_VALUES:
@@ -83,37 +115,13 @@ class OptionsController(SubwindowInterfaceController):
 
     def populate_preferences_from_db(self):
         log.debug("Populating preferences from database.")
-        self.get_object("sync_url_entry").set_text(kv_store["SYNCSERVER_URL"])
-        self.get_object("sync_server_fingerprint_entry").set_text(kv_store["SYNCSERVER_FINGERPRINT"])
-        self.get_object("sync_username_entry").set_text(kv_store["SYNCSERVER_USERNAME"])
-        self.get_object("sync_password_entry").set_text(kv_store["SYNCSERVER_PASSWORD"])
-        self.get_object("autosave_inactivity_interval_spinbutton").set_value(float(kv_store["AUTOSAVE_INACTIVITY_INTERVAL"]))
-        self.get_object("autosave_continuous_activity_interval_spinbutton").set_value(float(kv_store["AUTOSAVE_CONTINUOUS_ACTIVITY_INTERVAL"]))
-        self.get_object("autosync_interval_spinbutton").set_value(float(kv_store["AUTOSYNC_AFTER_SAVE_INTERVAL"]))
-        self.get_object("editor_use_custom_font_switch").props.active = kv_store["EDITOR_USE_CUSTOM_FONT"]
-        self.get_object("editor_font_selection_button").set_font_name(kv_store["EDITOR_DISPLAY_FONT"])
-        self.get_object("editor_border_width_spinbutton").set_value(float(kv_store["EDITOR_BORDER_WIDTH"]))
+        for pref in RENDER_RELATIONSHIPS:
+            self._ui_set(pref, kv_store[pref])
         self.editor_use_custom_font_switch_toggled(None, None, first_call=True)
 
     def save_preferences_to_db(self):
         log.debug("Saving preferences to database.")
-        kv_store["SYNCSERVER_URL"] = self.get_object("sync_url_entry").get_text()
-        kv_store["SYNCSERVER_FINGERPRINT"] = self.get_object("sync_server_fingerprint_entry").get_text()
-        kv_store["SYNCSERVER_USERNAME"] = self.get_object("sync_username_entry").get_text()
-        kv_store["SYNCSERVER_PASSWORD"] = self.get_object("sync_password_entry").get_text()
-        kv_store["AUTOSAVE_INACTIVITY_INTERVAL"] = int(self.get_object("autosave_inactivity_interval_spinbutton").get_value())
-        kv_store["AUTOSAVE_CONTINUOUS_ACTIVITY_INTERVAL"] = int(self.get_object("autosave_continuous_activity_interval_spinbutton").get_value())
-        kv_store["AUTOSYNC_AFTER_SAVE_INTERVAL"] = int(self.get_object("autosync_interval_spinbutton").get_value())
-        kv_store["EDITOR_USE_CUSTOM_FONT"] = self.get_object("editor_use_custom_font_switch").props.active
-        kv_store["EDITOR_DISPLAY_FONT"] = self.get_object("editor_font_selection_button").get_font_name()
-        kv_store["EDITOR_BORDER_WIDTH"] = int(self.get_object("editor_border_width_spinbutton").get_value())
-        self.global_r.emit("preference_changed", "SYNCSERVER_URL")
-        self.global_r.emit("preference_changed", "SYNCSERVER_FINGERPRINT")
-        self.global_r.emit("preference_changed", "SYNCSERVER_USERNAME")
-        self.global_r.emit("preference_changed", "SYNCSERVER_PASSWORD")
-        self.global_r.emit("preference_changed", "AUTOSAVE_INACTIVITY_INTERVAL")
-        self.global_r.emit("preference_changed", "AUTOSAVE_CONTINUOUS_ACTIVITY_INTERVAL")
-        self.global_r.emit("preference_changed", "AUTOSAVE_AFTER_SYNC_INTERVAL")
-        self.global_r.emit("preference_changed", "EDITOR_USE_CUSTOM_FONT")
-        self.global_r.emit("preference_changed", "EDITOR_DISPLAY_FONT")
-        self.global_r.emit("preference_changed", "EDITOR_BORDER_WIDTH")
+        for pref in RENDER_RELATIONSHIPS:
+            kv_store[pref] = self._ui_get(pref)
+        for pref in RENDER_RELATIONSHIPS:
+            self.global_r.emit("preference_changed", pref)
