@@ -16,15 +16,15 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 import requests, json
-from sqlalchemy.orm.exc import NoResultFound, FlushError
-
 from tuhi_gtk.database import kv_store, get_current_date, \
-    note_change_tracker, note_notonserver_tracker, note_content_notonserver_tracker, \
+    note_notonserver_tracker, note_content_notonserver_tracker, \
     note_store, note_content_store
-from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT
+from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC
+
 
 class ServerAccessPoint(object):
-    def __init__(self):
+    def __init__(self, global_r):
+        self.global_r = global_r
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
 
@@ -32,7 +32,7 @@ class ServerAccessPoint(object):
         self.pull()
         self.push()
 
-    def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker):
+    def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name):
         for serialized_data in serialized_data_blocks:
             instance = note_store.get(serialized_data)
             if instance is not None:
@@ -42,12 +42,14 @@ class ServerAccessPoint(object):
                     # We are talking about different instances. Conflict with server. Must change id of notonserver instance
                     old_id, new_id = model_store.rename_to_new_uuid(instance)
                     note_notonserver_tracker.register_rename(old_id, new_id)
-                    model_store.add_new(serialized_data)
+                    new_instance = model_store.add_new(serialized_data)
+                    self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
                     # Otherwise, something is awry with server. Server should not send conflicting instances
                     # (which are immutable) -- thus, I ignore the change
             else:
                 # This is a new instance that I am unaware of.
-                model_store.add_new(serialized_data)
+                new_instance = model_store.add_new(serialized_data)
+                self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
 
     def pull(self):
         try:
@@ -62,8 +64,8 @@ class ServerAccessPoint(object):
             pass
         else:
             data = r.json()
-            self._merge_change(data["notes"], note_store, note_notonserver_tracker)
-            self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker)
+            self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added")
+            self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
 
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
