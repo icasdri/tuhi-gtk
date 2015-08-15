@@ -51,7 +51,8 @@ def config_database():
 
 
 TYPE_LOOKUP = {
-    'int': int
+    'int': int,
+    'bool': lambda x: True if x == "True" else False
 }
 
 # Last synced date field implemented as key-value pair in kv_store :)
