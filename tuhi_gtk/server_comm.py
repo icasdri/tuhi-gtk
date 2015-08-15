@@ -55,17 +55,8 @@ class ServerAccessPoint(object):
                         old_id, new_id = note_store.rename_to_new_uuid(note)
                         note_notonserver_tracker.register_rename(old_id, new_id)
                         note_store.add_new(serialized_note)
-                    elif note in note_change_tracker:
-                        # There is change to a note I previously pushed to the server, but I have since changed the note as well.
-                        # We are talking about the same note. See who is newer.
-                        if note.date_modified < serialized_note["date_modified"]:
-                            # Server is newer, discard my change.
-                            note.update(serialized_note)
-                            note_change_tracker.discard(note)  # This commits the session.
-                        # Otherwise, I am newer, and I ignore the change
-                    else:
-                        # This is an update to a note that I previously pushed, but I have not since changed.
-                        note_store.update(note, serialized_note)
+                    # Otherwise, something is awry with server. Server should not send conflicting NoteContents
+                    # (which are immutable) -- thus, I ignore the change
                 else:
                     # This is a new note that I am unaware of.
                     note_store.add_new(serialized_note)
@@ -87,13 +78,12 @@ class ServerAccessPoint(object):
 
             # Recalculate date_content_modified on Note instances
             for note_id in {nc["note_id"] for nc in data["note_contents"]}:
-                note_store.get(note_id).refresh_title()
+                note_store.get(note_id).refresh_title()  # this is most likely NO LONGER necessary due to automatic handling in global_r as note_metadata_changed
 
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
     def push(self):
-        tried_notes = note_change_tracker.get_all_as_query() \
-                                         .union(note_notonserver_tracker.get_all_as_query())
+        tried_notes = note_notonserver_tracker.get_all_as_query()
         tried_note_contents = note_content_notonserver_tracker.get_all_as_query()
         data_dict = {"notes": [n.serialize() for n in tried_notes.all()],
                      "note_contents": [nc.serialize() for nc in tried_note_contents.all()]}
@@ -111,7 +101,6 @@ class ServerAccessPoint(object):
                 return
 
             if r.status_code == 200:
-                note_change_tracker.discard_all()
                 note_notonserver_tracker.discard_all()
                 note_content_notonserver_tracker.discard_all()
                 return
@@ -124,7 +113,6 @@ class ServerAccessPoint(object):
                 failed_notes = [x["note_id"] for x in failed_notes]
                 failed_note_contents = [x["note_content_id"] for x in failed_note_contents]
 
-                note_change_tracker.discard_all_but_failures(failed_notes)
                 note_notonserver_tracker.discard_all_but_failures(failed_notes)
                 note_content_notonserver_tracker.discard_all_but_failures(failed_note_contents)
 
