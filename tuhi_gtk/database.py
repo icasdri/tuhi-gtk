@@ -303,11 +303,6 @@ note_content_store = NoteContentStore()
 
 ### TRACKERS ###
 
-class NoteChangeTrackingModel(Base):
-    __tablename__ = "note_change_tracking"
-    note_id = Column(CHAR(36), ForeignKey("notes.note_id"), primary_key=True)
-
-
 class NoteNotOnServerTrackingModel(Base):
     __tablename__ = "note_notonserver_tracking"
     note_id = Column(CHAR(36), ForeignKey("notes.note_id"), primary_key=True)
@@ -375,11 +370,6 @@ class Tracker(object):
         return self._get(item) is not None
 
 
-class NoteChangeTracker(Tracker):
-    model = Note
-    tracking_model = NoteChangeTrackingModel
-    pk_name = "note_id"
-
 class NoteNotOnServerTracker(Tracker):
     model = Note
     tracking_model = NoteNotOnServerTrackingModel
@@ -390,6 +380,5 @@ class NoteContentNotOnServerTracker(Tracker):
     tracking_model = NoteContentNotOnServerTrackingModel
     pk_name = "note_content_id"
 
-note_change_tracker = NoteChangeTracker()
 note_notonserver_tracker = NoteNotOnServerTracker()
 note_content_notonserver_tracker = NoteContentNotOnServerTracker()
