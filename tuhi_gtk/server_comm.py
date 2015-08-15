@@ -19,7 +19,8 @@ import requests, json
 from tuhi_gtk.database import kv_store, get_current_date, \
     note_notonserver_tracker, note_content_notonserver_tracker, \
     note_store, note_content_store
-from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC
+from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC, \
+    SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
 
 
 class ServerAccessPoint(object):
@@ -70,10 +71,15 @@ class ServerAccessPoint(object):
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
     def push(self):
-        tried_notes = note_notonserver_tracker.get_all_as_query()
-        tried_note_contents = note_content_notonserver_tracker.get_all_as_query()
-        data_dict = {"notes": [n.serialize() for n in tried_notes.all()],
-                     "note_contents": [nc.serialize() for nc in tried_note_contents.all()]}
+        tried_notes = note_notonserver_tracker.get_all_as_query().all()
+        tried_note_contents = note_content_notonserver_tracker.get_all_as_query().all()
+        for note in tried_notes:
+            self.global_r.emit("note_sync_action", note, SYNC_ACTION_BEGIN)
+        for note_content in tried_note_contents:
+            self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_BEGIN)
+
+        data_dict = {"notes": [n.serialize() for n in tried_notes],
+                     "note_contents": [nc.serialize() for nc in tried_note_contents]}
         data = json.dumps(data_dict)
 
         try:
@@ -84,12 +90,19 @@ class ServerAccessPoint(object):
         else:
             if r.status_code in (400, 401, 500):
                 # TODO: Actual error handling for Bad Request, Unauthorized, and Server Error
-                pass
+                for note in tried_notes:
+                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                for note_content in tried_note_contents:
+                    self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
                 return
 
             if r.status_code == 200:
                 note_notonserver_tracker.discard_all()
                 note_content_notonserver_tracker.discard_all()
+                for note in tried_notes:
+                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
+                for note_content in tried_note_contents:
+                    self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_SUCCESS)
                 return
 
             if r.status_code == 202:
@@ -99,6 +112,24 @@ class ServerAccessPoint(object):
                 failed_note_contents = response["note_contents"] if "note_contents" in response else []
                 failed_notes = [x["note_id"] for x in failed_notes]
                 failed_note_contents = [x["note_content_id"] for x in failed_note_contents]
+
+                for note in tried_notes:
+                    if note.note_id in failed_notes:
+                        self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                    else:
+                        self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
+
+                failed_notes_from_contents = {}
+                success_notes_from_contents = {}
+                for note_content in tried_note_contents:
+                    if note_content.note_content_id in failed_note_contents:
+                        failed_notes_from_contents[note_content.note.note_id] = note_content.note
+                    else:
+                        success_notes_from_contents[note_content.note.note_id] = note_content.note
+                for note in failed_notes_from_contents.values():
+                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                for note in success_notes_from_contents.values():
+                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
 
                 note_notonserver_tracker.discard_all_but_failures(failed_notes)
                 note_content_notonserver_tracker.discard_all_but_failures(failed_note_contents)
