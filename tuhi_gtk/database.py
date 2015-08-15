@@ -139,7 +139,7 @@ class Note(Base):
     title = Column(String)
     # Use a NoteContent with type = deleted
     deleted = Column(Boolean, default=False)
-    date_created = Column(Integer, index=True, nullable=False)  # Seconds from epoch
+    date_created = Column(Integer, index=True, nullable=False, default=get_current_date)  # Seconds from epoch
     date_content_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
 
     def __init__(self, external=False, **kwargs):
@@ -202,7 +202,7 @@ class NoteContent(Base):
     note_id = Column(CHAR(36), ForeignKey('notes.note_id'), index=True)
     type = Column(Integer)  # used currently for deletion flags
     data = Column(Text)
-    date_created = Column(Integer, index=True, default=get_current_date)  # Seconds from epoch
+    date_created = Column(Integer, index=True, nullable=False, default=get_current_date)  # Seconds from epoch
 
     note = relationship("Note")
 
