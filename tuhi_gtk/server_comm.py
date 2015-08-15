@@ -38,7 +38,7 @@ class ServerAccessPoint(object):
 
     def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name):
         for serialized_data in serialized_data_blocks:
-            instance = note_store.get(serialized_data)
+            instance = model_store.get(serialized_data)
             if instance is not None:
                 # I have a instance that has the same id as the one coming in.
                 if instance in notonserver_tracker:
