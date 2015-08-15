@@ -16,12 +16,15 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 import requests, json
+import requests.exceptions
+from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.database import kv_store, get_current_date, \
     note_notonserver_tracker, note_content_notonserver_tracker, \
     note_store, note_content_store
 from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC, \
     SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
 
+log = get_log_for_prefix_tuple(("sync",))
 
 class ServerAccessPoint(object):
     def __init__(self, global_r):
@@ -60,8 +63,9 @@ class ServerAccessPoint(object):
 
         try:
             r = requests.get(self.sync_url, params=params, auth=self.auth)
-        except ConnectionError:
+        except requests.exceptions.ConnectionError as e:
             # TODO: try again, Gobject.timeout_add probably
+            log.error("ConnectionError: %s", e)
             pass
         else:
             data = r.json()
@@ -84,9 +88,14 @@ class ServerAccessPoint(object):
 
         try:
             r = requests.post(self.sync_url, data, auth=self.auth)
-        except ConnectionError:
-            # TODO: try again, Gobject.timeout_add probably
-            pass
+        except requests.exceptions.ConnectionError as e:
+            # TODO: Actual error handling logic for service unavailable, wrong network, etc.
+            log.error("ConnectionError: %s", e)
+            for note in tried_notes:
+                self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+            for note_content in tried_note_contents:
+                self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
+            return
         else:
             if r.status_code in (400, 401, 500):
                 # TODO: Actual error handling for Bad Request, Unauthorized, and Server Error
@@ -119,16 +128,16 @@ class ServerAccessPoint(object):
                     else:
                         self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
 
-                failed_notes_from_contents = {}
-                success_notes_from_contents = {}
+                failed_notes_from_contents = set()
+                success_notes_from_contents = set()
                 for note_content in tried_note_contents:
                     if note_content.note_content_id in failed_note_contents:
-                        failed_notes_from_contents[note_content.note.note_id] = note_content.note
+                        failed_notes_from_contents.add(note_content.note)
                     else:
-                        success_notes_from_contents[note_content.note.note_id] = note_content.note
-                for note in failed_notes_from_contents.values():
+                        success_notes_from_contents.add(note_content.note)
+                for note in failed_notes_from_contents:
                     self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
-                for note in success_notes_from_contents.values():
+                for note in success_notes_from_contents:
                     self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
 
                 note_notonserver_tracker.discard_all_but_failures(failed_notes)
