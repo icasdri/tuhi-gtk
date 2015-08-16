@@ -52,9 +52,10 @@ class SyncControl(GObject.Object):
     def sync(self):
         lock_acquired = self.sync_lock.acquire(blocking=False)
         if not lock_acquired:
+            log.info("Failed to acquire lock for sync.")
             return False
-        self.pull_result = None
-        self.push_result = None
+        log.debug("Sync started.")
+        log.debug("Retrieving server connection preferences.")
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
 
@@ -72,8 +73,8 @@ class SyncControl(GObject.Object):
             return
 
         data = res
-        self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added")
-        self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
+        yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added")
+        yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
         kv_store["LAST_PULL_DATE"] = get_current_date()
 
         push_thread = threading.Thread(target=self._push)
@@ -98,6 +99,7 @@ class SyncControl(GObject.Object):
         self.sync_lock.release()
 
     def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name):
+        log.debug("Merging changes from pull into %s.", model_store)
         for serialized_data in serialized_data_blocks:
             instance = model_store.get(serialized_data)
             if instance is not None:
@@ -105,31 +107,48 @@ class SyncControl(GObject.Object):
                 if instance in notonserver_tracker:
                     # There is a new instance on the server that conflicts with a new note I've made.
                     # We are talking about different instances. Conflict with server. Must change id of notonserver instance
+                    if "note_content_id" in serialized_data:
+                        log.debug("UUID conflict detected in pull data for NoteContent, %s. Trying to overcome.", serialized_data["note_content_id"])
+                    else:
+                        log.debug("UUID conflict detected in pull data for Note, %s. Trying to overcome.", serialized_data["note_id"])
                     old_id, new_id = model_store.rename_to_new_uuid(instance)
+                    log.debug("Attempted local rename %s --> %s", old_id, new_id)
                     note_notonserver_tracker.register_rename(old_id, new_id)
+                    if "note_content_id" in serialized_data:
+                        log.debug("Creating new NoteContent instance for %s", serialized_data["note_content_id"])
+                    else:
+                        log.debug("Creating new Note instance for %s", serialized_data["note_id"])
                     new_instance = model_store.add_new(serialized_data)
                     self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
                     # Otherwise, something is awry with server. Server should not send conflicting instances
                     # (which are immutable) -- thus, I ignore the change
             else:
                 # This is a new instance that I am unaware of.
+                if "note_content_id" in serialized_data:
+                    log.debug("Creating new NoteContent instance for %s", serialized_data["note_content_id"])
+                else:
+                    log.debug("Creating new Note instance for %s", serialized_data["note_id"])
                 new_instance = model_store.add_new(serialized_data)
                 self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
+            yield True
 
     def _pull(self, after):
+        log.debug("Executing pull thread")
         if after is None:
             params = {}
         else:
             params = {"after": after if isinstance(after, str) else str(after)}
 
         try:
+            log.debug("Connecting to server for GET.")
             r = requests.get(self.sync_url, params=params, auth=self.auth)
         except requests.exceptions.ConnectionError as e:
             # TODO: try again, Gobject.timeout_add probably
             log.error("ConnectionError: %s", e)
         else:
             data = r.json()
-            self.emit("server_comm_pull_complete", data)
+            pull_process_gen = self._process_pull_comm(data)
+            GObject.idle_add(lambda x: next(pull_process_gen, False), GObject.PRIORITY_LOW)
 
     def _push(self):
         tried_notes = note_notonserver_tracker.get_all_as_query().all()
