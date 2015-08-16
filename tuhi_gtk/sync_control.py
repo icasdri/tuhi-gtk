@@ -15,8 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
+from gi.repository import GObject
 import requests, json
 import requests.exceptions
+import threading
+import time
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.database import kv_store, get_current_date, \
     note_notonserver_tracker, note_content_notonserver_tracker, \
@@ -26,15 +29,40 @@ from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC, \
 
 log = get_log_for_prefix_tuple(("sync",))
 
-class ServerAccessPoint(object):
+class SyncControl(GObject.Object):
+    __gsignals__ = {
+        "sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
+        # Action names: begin, success, failure
+        "note_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
+        # Action names: begin, success, failure
+    }
+
     def __init__(self, global_r):
         self.global_r = global_r
-        self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
-        self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
+        self.global_r.instance_register(self)
+        self.sync_lock = threading.Lock()
 
     def sync(self):
-        self.pull()
-        self.push()
+        lock_acquired = self.sync_lock.acquire(blocking=False)
+        if not lock_acquired:
+            return False
+        thread = threading.Thread(target=self._do_sync)
+        thread.start()
+        return True
+
+    def _do_sync(self):
+        self.emit("sync_action", SYNC_ACTION_BEGIN)
+        # self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
+        # self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
+
+        pull_result = False
+        push_result = True
+        time.sleep(5)
+        # pull_result = self._pull()
+        # push_result = self._push()
+
+        self.emit("sync_action", SYNC_ACTION_SUCCESS if pull_result and push_result else SYNC_ACTION_FAILURE)
+        self.sync_lock.release()
 
     def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name):
         for serialized_data in serialized_data_blocks:
@@ -55,7 +83,7 @@ class ServerAccessPoint(object):
                 new_instance = model_store.add_new(serialized_data)
                 self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
 
-    def pull(self):
+    def _pull(self):
         try:
             params = {"after": str(kv_store["LAST_PULL_DATE"])}
         except KeyError:
@@ -66,6 +94,7 @@ class ServerAccessPoint(object):
         except requests.exceptions.ConnectionError as e:
             # TODO: try again, Gobject.timeout_add probably
             log.error("ConnectionError: %s", e)
+            return False
             pass
         else:
             data = r.json()
@@ -73,8 +102,9 @@ class ServerAccessPoint(object):
             self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
 
             kv_store["LAST_PULL_DATE"] = get_current_date()
+            return True
 
-    def push(self):
+    def _push(self):
         tried_notes = note_notonserver_tracker.get_all_as_query().all()
         tried_note_contents = note_content_notonserver_tracker.get_all_as_query().all()
         for note in tried_notes:
@@ -112,7 +142,7 @@ class ServerAccessPoint(object):
                     self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
                 for note_content in tried_note_contents:
                     self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_SUCCESS)
-                return
+                return True
 
             if r.status_code == 202:
                 response = r.json()

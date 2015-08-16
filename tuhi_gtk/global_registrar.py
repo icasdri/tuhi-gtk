@@ -16,8 +16,11 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import GObject, Gtk
+import threading
+from tuhi_gtk.sync_control import SyncControl
 from tuhi_gtk.util import ignore_sender_function
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
+from tuhi_gtk.database import note_content_store
 
 log = get_log_for_prefix_tuple(("global_r",))
 
@@ -31,19 +34,20 @@ class GlobalRegistrar(GObject.Object):
         # Reasons: user, sync
         "note_metadata_changed": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
         # Metadata signal fired from logic here as a response to note_content_added signals
-        "note_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
-        # Action names: begin, success, failure
 
         "application_shutdown": (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, (GObject.TYPE_STRING,))
     }
 
     def __init__(self):
+        print("----> note_content_store.pk_name: ", note_content_store.pk_name)
         GObject.Object.__init__(self)
         GObject.type_register(type(self))
         self.connect("application_shutdown", ignore_sender_function(self.application_shutdown))
         self.connect("note_content_added", ignore_sender_function(self.handle_note_content_added))
         # event.listen(db_session, "before_commit", self._db_changed_callback)
         self.conroller_types = set()
+
+        self.sync_control = SyncControl(self)
 
     def handle_note_content_added(self, note_content, reason):
         # Emit a note_metadata_changed signal if necessary
