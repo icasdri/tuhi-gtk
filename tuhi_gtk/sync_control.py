@@ -108,7 +108,7 @@ class SyncControl(GObject.Object):
                 if instance in notonserver_tracker:
                     # There is a new instance on the server that conflicts with a new note I've made.
                     # We are talking about different instances. Conflict with server. Must change id of notonserver instance
-                    log.debug("UUID conflict detected in pull data for %s, %s. Trying to overcome.", instance_name, serialized_data[pk_name])
+                    log.warn("UUID conflict detected in pull data for %s, %s. Trying to overcome.", instance_name, serialized_data[pk_name])
                     old_id, new_id = model_store.rename_to_new_uuid(instance)
                     log.debug("Attempted local rename %s --> %s", old_id, new_id)
                     note_notonserver_tracker.register_rename(old_id, new_id)
