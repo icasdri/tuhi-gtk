@@ -55,6 +55,7 @@ class SyncControl(GObject.Object):
             log.info("Failed to acquire lock for sync.")
             return False
         log.debug("Sync started.")
+        self.emit("sync_action", SYNC_ACTION_BEGIN)
         log.debug("Retrieving server connection preferences.")
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
@@ -66,71 +67,6 @@ class SyncControl(GObject.Object):
 
         pull_thread = threading.Thread(target=self._pull, args=(after,))
         pull_thread.start()
-
-    def _process_pull_comm(self, res):
-        if not isinstance(res, dict):
-            log.error("Something went wrong with pull.")
-            return
-
-        data = res
-        yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added")
-        yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
-        kv_store["LAST_PULL_DATE"] = get_current_date()
-
-        push_thread = threading.Thread(target=self._push)
-        push_thread.start()
-
-
-    def _process_push_comm(self, res):
-        pass
-
-    def _do_sync(self):
-        self.emit("sync_action", SYNC_ACTION_BEGIN)
-        # self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
-        # self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
-
-        pull_result = False
-        push_result = True
-        time.sleep(5)
-        # pull_result = self._pull()
-        # push_result = self._push()
-
-        self.emit("sync_action", SYNC_ACTION_SUCCESS if pull_result and push_result else SYNC_ACTION_FAILURE)
-        self.sync_lock.release()
-
-    def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name):
-        log.debug("Merging changes from pull into %s.", model_store)
-        for serialized_data in serialized_data_blocks:
-            instance = model_store.get(serialized_data)
-            if instance is not None:
-                # I have a instance that has the same id as the one coming in.
-                if instance in notonserver_tracker:
-                    # There is a new instance on the server that conflicts with a new note I've made.
-                    # We are talking about different instances. Conflict with server. Must change id of notonserver instance
-                    if "note_content_id" in serialized_data:
-                        log.debug("UUID conflict detected in pull data for NoteContent, %s. Trying to overcome.", serialized_data["note_content_id"])
-                    else:
-                        log.debug("UUID conflict detected in pull data for Note, %s. Trying to overcome.", serialized_data["note_id"])
-                    old_id, new_id = model_store.rename_to_new_uuid(instance)
-                    log.debug("Attempted local rename %s --> %s", old_id, new_id)
-                    note_notonserver_tracker.register_rename(old_id, new_id)
-                    if "note_content_id" in serialized_data:
-                        log.debug("Creating new NoteContent instance for %s", serialized_data["note_content_id"])
-                    else:
-                        log.debug("Creating new Note instance for %s", serialized_data["note_id"])
-                    new_instance = model_store.add_new(serialized_data)
-                    self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
-                    # Otherwise, something is awry with server. Server should not send conflicting instances
-                    # (which are immutable) -- thus, I ignore the change
-            else:
-                # This is a new instance that I am unaware of.
-                if "note_content_id" in serialized_data:
-                    log.debug("Creating new NoteContent instance for %s", serialized_data["note_content_id"])
-                else:
-                    log.debug("Creating new Note instance for %s", serialized_data["note_id"])
-                new_instance = model_store.add_new(serialized_data)
-                self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
-            yield True
 
     def _pull(self, after):
         log.debug("Executing pull thread")
@@ -150,13 +86,56 @@ class SyncControl(GObject.Object):
             pull_process_gen = self._process_pull_comm(data)
             GObject.idle_add(lambda x: next(pull_process_gen, False), GObject.PRIORITY_LOW)
 
+    def _process_pull_comm(self, res):
+        if not isinstance(res, dict):
+            log.error("Something went wrong with pull.")
+            return
+
+        data = res
+        yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added", "Note", "note_id")
+        yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added", "NoteContent", "note_content_id")
+        kv_store["LAST_PULL_DATE"] = get_current_date()
+
+        push_thread = threading.Thread(target=self._push)
+        push_thread.start()
+
+    def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name, instance_name, pk_name):
+        log.debug("Merging changes from pull into %s.", model_store)
+        for serialized_data in serialized_data_blocks:
+            instance = model_store.get(serialized_data)
+            if instance is not None:
+                # I have a instance that has the same id as the one coming in.
+                if instance in notonserver_tracker:
+                    # There is a new instance on the server that conflicts with a new note I've made.
+                    # We are talking about different instances. Conflict with server. Must change id of notonserver instance
+                    log.debug("UUID conflict detected in pull data for %s, %s. Trying to overcome.", instance_name, serialized_data[pk_name])
+                    old_id, new_id = model_store.rename_to_new_uuid(instance)
+                    log.debug("Attempted local rename %s --> %s", old_id, new_id)
+                    note_notonserver_tracker.register_rename(old_id, new_id)
+                    log.debug("Creating new %s instance for %s", instance_name, serialized_data[pk_name])
+                    new_instance = model_store.add_new(serialized_data)
+                    self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
+                    # Otherwise, something is awry with server. Server should not send conflicting instances
+                    # (which are immutable) -- thus, I ignore the change
+            else:
+                # This is a new instance that I am unaware of.
+                log.debug("Creating new %s instance for %s", instance_name, serialized_data[pk_name])
+                new_instance = model_store.add_new(serialized_data)
+                self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
+            yield True
+
+
+    def _process_push_comm(self, res):
+        self.emit("sync_action", SYNC_ACTION_SUCCESS)  # need to use actual logic here for whether success or not
+        self.sync_lock.release()
+
     def _push(self):
         tried_notes = note_notonserver_tracker.get_all_as_query().all()
         tried_note_contents = note_content_notonserver_tracker.get_all_as_query().all()
         for note in tried_notes:
-            self.global_r.emit("note_sync_action", note, SYNC_ACTION_BEGIN)
+            self.emit("note_sync_action", note, SYNC_ACTION_BEGIN)
         for note_content in tried_note_contents:
-            self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_BEGIN)
+            self.emit("note_sync_action", note_content.note, SYNC_ACTION_BEGIN)
 
         data_dict = {"notes": [n.serialize() for n in tried_notes],
                      "note_contents": [nc.serialize() for nc in tried_note_contents]}
@@ -168,26 +147,26 @@ class SyncControl(GObject.Object):
             # TODO: Actual error handling logic for service unavailable, wrong network, etc.
             log.error("ConnectionError: %s", e)
             for note in tried_notes:
-                self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                self.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
             for note_content in tried_note_contents:
-                self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
+                self.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
             return
         else:
             if r.status_code in (400, 401, 500):
                 # TODO: Actual error handling for Bad Request, Unauthorized, and Server Error
                 for note in tried_notes:
-                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                    self.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
                 for note_content in tried_note_contents:
-                    self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
+                    self.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
                 return
 
             if r.status_code == 200:
                 note_notonserver_tracker.discard_all()
                 note_content_notonserver_tracker.discard_all()
                 for note in tried_notes:
-                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
+                    self.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
                 for note_content in tried_note_contents:
-                    self.global_r.emit("note_sync_action", note_content.note, SYNC_ACTION_SUCCESS)
+                    self.emit("note_sync_action", note_content.note, SYNC_ACTION_SUCCESS)
                 return True
 
             if r.status_code == 202:
@@ -200,9 +179,9 @@ class SyncControl(GObject.Object):
 
                 for note in tried_notes:
                     if note.note_id in failed_notes:
-                        self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                        self.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
                     else:
-                        self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
+                        self.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
 
                 failed_notes_from_contents = set()
                 success_notes_from_contents = set()
@@ -212,9 +191,9 @@ class SyncControl(GObject.Object):
                     else:
                         success_notes_from_contents.add(note_content.note)
                 for note in failed_notes_from_contents:
-                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
+                    self.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
                 for note in success_notes_from_contents:
-                    self.global_r.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
+                    self.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
 
                 note_notonserver_tracker.discard_all_but_failures(failed_notes)
                 note_content_notonserver_tracker.discard_all_but_failures(failed_note_contents)
