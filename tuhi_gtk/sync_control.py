@@ -26,6 +26,7 @@ from tuhi_gtk.database import kv_store, get_current_date, \
     note_store, note_content_store
 from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC, \
     SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
+from tuhi_gtk.util import ignore_sender_function
 
 log = get_log_for_prefix_tuple(("sync",))
 
@@ -35,20 +36,52 @@ class SyncControl(GObject.Object):
         # Action names: begin, success, failure
         "note_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
         # Action names: begin, success, failure
+        "server_comm_pull_complete": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT,)),
+        # this signal is only used internally in this class
+        "server_comm_push_complete": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT,))
+        # this signal is only used internally in this class
     }
 
     def __init__(self, global_r):
         self.global_r = global_r
         self.global_r.instance_register(self)
         self.sync_lock = threading.Lock()
+        self.connect("server_comm_pull_complete", ignore_sender_function(self._process_pull_comm))
+        self.connect("server_comm_push_complete", ignore_sender_function(self._process_push_comm))
 
     def sync(self):
         lock_acquired = self.sync_lock.acquire(blocking=False)
         if not lock_acquired:
             return False
-        thread = threading.Thread(target=self._do_sync)
-        thread.start()
-        return True
+        self.pull_result = None
+        self.push_result = None
+        self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
+        self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
+
+        try:
+            after = kv_store["LAST_PULL_DATE"]
+        except KeyError:
+            after = None
+
+        pull_thread = threading.Thread(target=self._pull, args=(after,))
+        pull_thread.start()
+
+    def _process_pull_comm(self, res):
+        if not isinstance(res, dict):
+            log.error("Something went wrong with pull.")
+            return
+
+        data = res
+        self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added")
+        self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
+        kv_store["LAST_PULL_DATE"] = get_current_date()
+
+        push_thread = threading.Thread(target=self._push)
+        push_thread.start()
+
+
+    def _process_push_comm(self, res):
+        pass
 
     def _do_sync(self):
         self.emit("sync_action", SYNC_ACTION_BEGIN)
@@ -83,26 +116,20 @@ class SyncControl(GObject.Object):
                 new_instance = model_store.add_new(serialized_data)
                 self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
 
-    def _pull(self):
-        try:
-            params = {"after": str(kv_store["LAST_PULL_DATE"])}
-        except KeyError:
+    def _pull(self, after):
+        if after is None:
             params = {}
+        else:
+            params = {"after": after if isinstance(after, str) else str(after)}
 
         try:
             r = requests.get(self.sync_url, params=params, auth=self.auth)
         except requests.exceptions.ConnectionError as e:
             # TODO: try again, Gobject.timeout_add probably
             log.error("ConnectionError: %s", e)
-            return False
-            pass
         else:
             data = r.json()
-            self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added")
-            self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added")
-
-            kv_store["LAST_PULL_DATE"] = get_current_date()
-            return True
+            self.emit("server_comm_pull_complete", data)
 
     def _push(self):
         tried_notes = note_notonserver_tracker.get_all_as_query().all()
