@@ -23,7 +23,7 @@ import time
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.database import kv_store, get_current_date, \
     note_notonserver_tracker, note_content_notonserver_tracker, \
-    note_store, note_content_store
+    note_store, note_content_store, Note
 from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC, \
     SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
 from tuhi_gtk.util import ignore_sender_function
@@ -129,16 +129,22 @@ class SyncControl(GObject.Object):
         self.emit("sync_action", SYNC_ACTION_SUCCESS)  # need to use actual logic here for whether success or not
         self.sync_lock.release()
 
-    def _push(self):
-        tried_notes = note_notonserver_tracker.get_all_as_query().all()
-        tried_note_contents = note_content_notonserver_tracker.get_all_as_query().all()
-        for note in tried_notes:
-            self.emit("note_sync_action", note, SYNC_ACTION_BEGIN)
-        for note_content in tried_note_contents:
-            self.emit("note_sync_action", note_content.note, SYNC_ACTION_BEGIN)
+    def _emit_note_sync_action_on_all(self, all_affected, except_affected, all_sig_action, except_sig_action):
+        for note in all_affected:
+            if except_affected is None or note.note_id not in except_affected:
+                self.emit("note_sync_action", note, all_sig_action)
+            else:
+                self.emit("note_sync_action", note, except_sig_action)
 
-        data_dict = {"notes": [n.serialize() for n in tried_notes],
-                     "note_contents": [nc.serialize() for nc in tried_note_contents]}
+    def _push(self):
+        tried_notes = note_notonserver_tracker.get_all_as_query()
+        tried_note_contents = note_content_notonserver_tracker.get_all_as_query()
+
+        affected_notes = tried_notes.union(Note.query.join(tried_note_contents)).all()
+        self._emit_note_sync_action_on_all(affected_notes, None, SYNC_ACTION_BEGIN, None)
+
+        data_dict = {"notes": [n.serialize() for n in tried_notes.all()],
+                     "note_contents": [nc.serialize() for nc in tried_note_contents.all()]}
         data = json.dumps(data_dict)
 
         try:
@@ -146,36 +152,25 @@ class SyncControl(GObject.Object):
         except requests.exceptions.ConnectionError as e:
             # TODO: Actual error handling logic for service unavailable, wrong network, etc.
             log.error("ConnectionError: %s", e)
-            for note in tried_notes:
-                self.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
-            for note_content in tried_note_contents:
-                self.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
+            self._emit_note_sync_action_on_all(affected_notes, None, SYNC_ACTION_FAILURE, None)
             return
         else:
             if r.status_code in (400, 401, 500):
                 # TODO: Actual error handling for Bad Request, Unauthorized, and Server Error
-                for note in tried_notes:
-                    self.emit("note_sync_action", note, SYNC_ACTION_FAILURE)
-                for note_content in tried_note_contents:
-                    self.emit("note_sync_action", note_content.note, SYNC_ACTION_FAILURE)
+                self._emit_note_sync_action_on_all(affected_notes, None, SYNC_ACTION_FAILURE, None)
                 return
 
             if r.status_code == 200:
                 note_notonserver_tracker.discard_all()
                 note_content_notonserver_tracker.discard_all()
-                for note in tried_notes:
-                    self.emit("note_sync_action", note, SYNC_ACTION_SUCCESS)
-                for note_content in tried_note_contents:
-                    self.emit("note_sync_action", note_content.note, SYNC_ACTION_SUCCESS)
+                self._emit_note_sync_action_on_all(affected_notes, None, SYNC_ACTION_SUCCESS, None)
                 return True
 
             if r.status_code == 202:
                 response = r.json()
 
-                failed_notes = response["notes"] if "notes" in response else []
-                failed_note_contents = response["note_contents"] if "note_contents" in response else []
-                failed_notes = [x["note_id"] for x in failed_notes]
-                failed_note_contents = [x["note_content_id"] for x in failed_note_contents]
+                failed_notes = [x["note_id"] for x in response["notes"]] if "notes" in response else []
+                failed_note_contents = [x["note_content_id"] for x in response["note_contents"]] if "note_contents" in response else []
 
                 for note in tried_notes:
                     if note.note_id in failed_notes:
