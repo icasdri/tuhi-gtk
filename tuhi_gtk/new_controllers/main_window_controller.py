@@ -32,7 +32,10 @@ class MainWindowController(WindowController):
             "MainWindowCosmeticsController",
             "SourceViewController",
             "NoteListController",
-            "NewNoteController"
+            "HistoryController",
+            "OptionsController",
+            "NewNoteController",
+            "SyncButtonController"
         ])
 
     def do_first_view_activate(self):
