@@ -16,11 +16,9 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import GObject, Gtk
-import threading
 from tuhi_gtk.sync_control import SyncControl
 from tuhi_gtk.util import ignore_sender_function
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.database import note_content_store
 
 log = get_log_for_prefix_tuple(("global_r",))
 
@@ -39,7 +37,6 @@ class GlobalRegistrar(GObject.Object):
     }
 
     def __init__(self):
-        print("----> note_content_store.pk_name: ", note_content_store.pk_name)
         GObject.Object.__init__(self)
         GObject.type_register(type(self))
         self.connect("application_shutdown", ignore_sender_function(self.application_shutdown))
