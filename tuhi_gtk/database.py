@@ -139,16 +139,19 @@ class Note(Base):
     title = Column(String)
     # Use a NoteContent with type = deleted
     deleted = Column(Boolean, default=False)
-    date_created = Column(Integer, index=True, nullable=False, default=get_current_date)  # Seconds from epoch
-    date_content_modified = Column(Integer, index=True, nullable=False)  # Seconds from epoch
+    date_created = Column(Integer, index=True, nullable=True, default=get_current_date)  # Seconds from epoch
+    date_content_modified = Column(Integer, index=True, nullable=True)  # Seconds from epoch
 
     def __init__(self, external=False, **kwargs):
         if not external:
             self.note_id = new_uuid()
-            self.date_modified = get_current_date()
+            self.date_created = get_current_date()
             self.date_content_modified = get_current_date()
             note_notonserver_tracker.register(self)
         super(Note, self).__init__(**kwargs)
+        if external:
+            self.date_content_modified = self.date_created
+            self.title = "New Note"
 
     def serialize(self):
         return directly_serialize(self, ("note_id", "date_created"))
@@ -246,7 +249,7 @@ class Store(object):
         db_session.commit()
         return m
 
-    def rename_to_new_uuid(self, old):
+    def _rename_to_new_uuid_uncommitted(self, old):
         new_id = new_uuid()
         while new_id in self:
             new_id = new_uuid()
@@ -256,12 +259,12 @@ class Store(object):
             target = self.get(old)
         old_id = getattr(target, self.pk_name)
         setattr(target, self.pk_name, new_id)
-        db_session.commit()
         return old_id, new_id
 
-    def update(self, item, serialized_data):
-        item.update(serialized_data)
+    def rename_to_new_uuid(self, old):
+        old_id, new_id = self._rename_to_new_uuid_uncommitted(old)
         db_session.commit()
+        return old_id, new_id
 
     def get(self, id_or_serialized):
         if isinstance(id_or_serialized, dict):
@@ -282,6 +285,12 @@ class Store(object):
 class NoteStore(Store):
     model = Note
     pk_name = "note_id"
+
+    def rename_to_new_uuid(self, old):
+        old_id, new_id = self._rename_to_new_uuid_uncommitted(old)
+        NoteContent.query.filter(NoteContent.note_id == old_id).update({"note_id": new_id}, synchronize_session='fetch')
+        db_session.commit()
+        return old_id, new_id
 
 class NoteContentStore(Store):
     model = NoteContent
