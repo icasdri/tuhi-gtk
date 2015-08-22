@@ -21,14 +21,20 @@ from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 
 log = get_log_for_prefix_tuple(("ui", "note_row"))
 
+# dict mapping feature_name -> (feature_widget_id, show_func, hide_func)
+FEATURES = {
+    "spinner": ("spinner", lambda w: w.start(), lambda w: w.stop()),
+    "failure_label": ("failure_label", None, None)
+}
+
 class NoteRow(Gtk.ListBoxRow):
     def initialize(self, builder, note):
         self.builder = builder
         self._label = builder.get_object("label")
         self._box = builder.get_object("box")
         self._spinner = builder.get_object("spinner")
-        self._spin_status = False
         self.note = note
+        self._current_feature = None
         self.refresh()
 
     @staticmethod
@@ -50,6 +56,31 @@ class NoteRow(Gtk.ListBoxRow):
             self._spinner.stop()
             self._box.remove(self.spinner)
             self._spin_status = False
+
+    def show_feature(self, feature):
+        if self._current_feature == feature:
+            return
+        self.hide_feature()
+        widget_id, show_func, _ = FEATURES[feature]
+        widget = self.builder.get_object(widget_id)
+        self._box.pack_end(widget, expand=False, fill=False, padding=12)
+        widget.show()
+        if show_func is not None:
+            show_func(widget)
+        self._current_feature = feature
+
+    def hide_feature(self, feature=None):
+        if self._current_feature is None:
+            return
+        if feature is not None and feature != self._current_feature:
+            return
+        widget_id, _, hide_func = FEATURES[self._current_feature]
+        widget = self.builder.get_object(widget_id)
+        if hide_func is not None:
+            hide_func(widget)
+        widget.hide()
+        self._box.remove(widget)
+        self._current_feature = None
 
     def refresh(self):
         log.debug("Refreshing NoteRow: (%s) '%s'", self.note.note_id, self.note.title)
