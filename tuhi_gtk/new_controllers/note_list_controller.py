@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from tuhi_gtk.config import REASON_USER
+from tuhi_gtk.config import REASON_USER, SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function, property_change_function
 from tuhi_gtk.database import kv_store, Note, NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE
@@ -45,6 +45,7 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
         self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
         self.window.connect("notify::current-note", property_change_function(self.handle_window_current_note_change))
         self.global_r.connect("note-metadata-changed", ignore_sender_function(self.handle_note_metadata_change))
+        self.global_r.sync_control.connect("note-sync-action", ignore_sender_function(self.handle_note_sync_action))
         last_note_selected = None
         if "LAST_NOTE_SELECTED" in kv_store:
             last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).first()
@@ -52,6 +53,17 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
             last_note_selected = Note.non_deleted().order_by(Note.date_content_modified.desc()).first()
         log.debug("Selecting last note selected")
         self.select_item(last_note_selected)
+
+    def handle_note_sync_action(self, note, sync_action):
+        log.debug("Recieved Note Sync Action: %s: %s", note.note_id, sync_action)
+        row = self._ro_get_row(note)
+        if row is not None:
+            if sync_action == SYNC_ACTION_BEGIN:
+                row.show_feature("spinner")
+            elif sync_action == SYNC_ACTION_SUCCESS:
+                row.hide_feature("spinner")
+            elif sync_action == SYNC_ACTION_FAILURE:
+                row.show_feature("failure_label")
 
     def handle_window_current_note_change(self, note):
         if self.list.get_selected_row() != note:
