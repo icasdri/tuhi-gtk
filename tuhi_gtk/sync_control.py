@@ -32,14 +32,10 @@ log = get_log_for_prefix_tuple(("sync",))
 
 class SyncControl(GObject.Object):
     __gsignals__ = {
-        "sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
+        "global_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
         # Action names: begin, success, failure
-        "note_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
+        "sync_action_for_note_id": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, GObject.TYPE_STRING)),
         # Action names: begin, success, failure
-        "server_comm_pull_complete": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT,)),
-        # this signal is only used internally in this class
-        "server_comm_push_complete": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT,))
-        # this signal is only used internally in this class
     }
 
     def __init__(self, global_r):
@@ -65,10 +61,10 @@ class SyncControl(GObject.Object):
         except KeyError:
             after = None
 
-        pull_thread = threading.Thread(target=self._pull, args=(after,))
+        pull_thread = threading.Thread(target=self._pull_comm, args=(after,))
         pull_thread.start()
 
-    def _pull(self, after):
+    def _pull_comm(self, after):
         log.debug("Executing pull thread")
         if after is None:
             params = {}
@@ -83,10 +79,10 @@ class SyncControl(GObject.Object):
             log.error("ConnectionError: %s", e)
         else:
             data = r.json()
-            pull_process_gen = self._process_pull_comm(data)
-            GObject.idle_add(lambda x: next(pull_process_gen, False), GObject.PRIORITY_LOW)
+            post_pull_comm_gen = self._post_pull_comm(data)
+            GObject.idle_add(lambda x: next(post_pull_comm_gen, False), GObject.PRIORITY_LOW)
 
-    def _process_pull_comm(self, res):
+    def _post_pull_comm(self, res):
         if not isinstance(res, dict):
             log.error("Something went wrong with pull.")
             return
@@ -96,8 +92,8 @@ class SyncControl(GObject.Object):
         yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added", "NoteContent", "note_content_id")
         kv_store["LAST_PULL_DATE"] = get_current_date()
 
-        push_thread = threading.Thread(target=self._push)
-        push_thread.start()
+        pre_push_comm_gen = self._pre_push_comm()
+        GObject.idle_add(lambda x: next(pre_push_comm_gen, False), GObject.PRIORITY_LOW)
 
     def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name, instance_name, pk_name):
         log.debug("Merging changes from pull into %s.", model_store)
@@ -124,10 +120,29 @@ class SyncControl(GObject.Object):
                 self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
             yield True
 
+    def _pre_push_comm(self):
+        notonserver_notes = note_notonserver_tracker.get_all()
+        notonserver_note_contents = note_content_notonserver_tracker.get_all()
+        yield True
 
-    def _process_push_comm(self, res):
-        self.emit("sync_action", SYNC_ACTION_SUCCESS)  # need to use actual logic here for whether success or not
-        self.sync_lock.release()
+        notonserver_note_ids = {note.note_id for note in notonserver_notes}
+        notonserver_note_content_ids = {note_content.note_content_id for note_content in notonserver_note_contents}
+        affected_note_ids = notonserver_note_ids | {note_content.note_id for note_content in notonserver_note_contents}
+        yield True
+
+        for note_id in affected_note_ids:
+            self.emit("sync_action_for_note_id", note_id, SYNC_ACTION_BEGIN)
+        yield True
+
+        data_dict = {"notes": [n.serialize() for n in notonserver_notes],
+                     "note_contents": [nc.serialize() for nc in notonserver_note_contents]}
+        yield True
+
+        data = json.dumps(data_dict)
+        yield True
+
+        push_thread = threading.Thread(target=self._push_comm, args=(data,))
+        push_thread.start()
 
     def _emit_note_sync_action_on_all(self, all_affected, except_affected, all_sig_action, except_sig_action):
         for note in all_affected:
@@ -135,6 +150,7 @@ class SyncControl(GObject.Object):
                 self.emit("note_sync_action", note, all_sig_action)
             else:
                 self.emit("note_sync_action", note, except_sig_action)
+            yield True
 
     def _push(self):
         tried_notes = note_notonserver_tracker.get_all_as_query()
@@ -196,3 +212,7 @@ class SyncControl(GObject.Object):
                 # TODO: Actually read the error codes for each failure
 
             print(r.json())
+
+    def _process_push_comm(self, res):
+        self.emit("sync_action", SYNC_ACTION_SUCCESS)  # need to use actual logic here for whether success or not
+        self.sync_lock.release()
