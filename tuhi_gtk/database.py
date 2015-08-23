@@ -318,10 +318,10 @@ class Tracker(object):
     tracking_model = None
     pk_name = "pk"
 
-    def register(self, note):
-        if note not in self:
+    def register(self, obj):
+        if obj not in self:
             t = self.tracking_model()
-            setattr(t, self.pk_name, getattr(note, self.pk_name))
+            setattr(t, self.pk_name, getattr(obj, self.pk_name))
             try:
                 db_session.add(t)
                 db_session.commit()
