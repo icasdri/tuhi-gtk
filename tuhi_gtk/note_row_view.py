@@ -44,19 +44,6 @@ class NoteRow(Gtk.ListBoxRow):
         note_row.initialize(builder, note)
         return note_row
 
-    def spinner_start(self):
-        if self._spin_status is False:
-            self._spinner.start()
-            self._box.pack_end(self._spinner, expand=False, fill=False, padding=12)
-            self._spinner.show()
-            self._spin_status = True
-
-    def spinner_stop(self):
-        if self._spin_status is True:
-            self._spinner.stop()
-            self._box.remove(self.spinner)
-            self._spin_status = False
-
     def show_feature(self, feature):
         if self._current_feature == feature:
             return
