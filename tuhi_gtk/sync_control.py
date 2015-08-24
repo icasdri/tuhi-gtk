@@ -22,7 +22,7 @@ import threading
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.database import kv_store, get_current_date, \
     note_notonserver_tracker, note_content_notonserver_tracker, \
-    note_store, note_content_store, Note
+    note_store, note_content_store
 from tuhi_gtk.config import SYNCSERVER_NOTES_ENDPOINT, REASON_SYNC, \
     SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS, \
     SYNC_FAILURE_FATAL, SYNC_FAILURE_CONNECTION, SYNC_FAILURE_AUTHENTICATION, SYNC_FAILURE_FINGERPRINT, SYNC_FAILURE_SSLHANDSHAKE
@@ -51,7 +51,7 @@ class SyncControl(GObject.Object):
             log.info("Failed to acquire lock for sync.")
             return False
         log.debug("Sync started.")
-        self.emit("sync_action", SYNC_ACTION_BEGIN)
+        self.emit("global_sync_action", SYNC_ACTION_BEGIN)
         log.debug("Retrieving server connection preferences.")
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
@@ -75,12 +75,19 @@ class SyncControl(GObject.Object):
             log.debug("Connecting to server for GET.")
             r = requests.get(self.sync_url, params=params, auth=self.auth)
         except requests.exceptions.ConnectionError as e:
-            # TODO: try again, Gobject.timeout_add probably
             log.error("ConnectionError: %s", e)
+            e_ = e  # Avoid reference-before-assignment error
+            GObject.idle_add(lambda x: self._handle_pull_connection_error(e_), GObject.PRIORITY_LOW)
         else:
             data = r.json()
             post_pull_comm_gen = self._post_pull_comm(data)
             GObject.idle_add(lambda x: next(post_pull_comm_gen, False), GObject.PRIORITY_LOW)
+
+    def _handle_pull_connection_error(self, e):
+        self.emit("global_sync_action", SYNC_ACTION_FAILURE)
+        self.emit("sync_failure", SYNC_FAILURE_CONNECTION, (e, self.sync_url))
+        self.sync_lock.release()
+        return False
 
     def _post_pull_comm(self, res):
         if not isinstance(res, dict):
@@ -125,25 +132,31 @@ class SyncControl(GObject.Object):
         notonserver_note_contents = note_content_notonserver_tracker.get_all()
         yield True
 
-        notonserver_notes_dict = {note.note_id: note for note in notonserver_notes}
-        notonserver_note_contents_dict = {note_content.note_content_id: note_content for note_content in notonserver_note_contents}
-        affected_notes_dict = {note_content.note_id: note_content.note for note_content in notonserver_note_contents}.update(notonserver_notes_dict)
-        yield True
+        if len(notonserver_notes) > 0 and len(notonserver_note_contents) > 0:
+            notonserver_notes_dict = {note.note_id: note for note in notonserver_notes}
+            notonserver_note_contents_dict = {note_content.note_content_id: note_content for note_content in notonserver_note_contents}
+            affected_notes_dict = {note_content.note_id: note_content.note for note_content in notonserver_note_contents}
+            affected_notes_dict.update(notonserver_notes_dict)
+            yield True
 
-        for note in affected_notes_dict.values():
-            self.emit("sync_action_for_note", note, SYNC_ACTION_BEGIN)
-        yield True
+            for note in affected_notes_dict.values():
+                self.emit("sync_action_for_note", note, SYNC_ACTION_BEGIN)
+            yield True
 
-        data_dict = {"notes": [n.serialize() for n in notonserver_notes],
-                     "note_contents": [nc.serialize() for nc in notonserver_note_contents]}
-        yield True
+            data_dict = {"notes": [n.serialize() for n in notonserver_notes],
+                         "note_contents": [nc.serialize() for nc in notonserver_note_contents]}
+            yield True
 
-        data = json.dumps(data_dict)
-        yield True
+            data = json.dumps(data_dict)
+            yield True
 
-        raw_tracker_dicts = (notonserver_notes_dict, notonserver_note_contents_dict, affected_notes_dict)
-        push_thread = threading.Thread(target=self._push_comm, args=(data, raw_tracker_dicts))
-        push_thread.start()
+            raw_tracker_dicts = (notonserver_notes_dict, notonserver_note_contents_dict, affected_notes_dict)
+            push_thread = threading.Thread(target=self._push_comm, args=(data, raw_tracker_dicts))
+            push_thread.start()
+        else:
+            log.info("No unsynced changes to push. Skipping push.")
+            self.emit("global_sync_action", SYNC_ACTION_SUCCESS)
+            self.sync_lock.release()
 
     def _push_comm(self, data, raw_tracker_dicts):  # Runs in separate thread
         try:
@@ -151,7 +164,8 @@ class SyncControl(GObject.Object):
         except requests.exceptions.ConnectionError as e:
             # TODO: Actual error handling logic for service unavailable, wrong network, etc.
             log.error("ConnectionError: %s", e)
-            GObject.idle_add(lambda x: self._handle_push_connection_error(raw_tracker_dicts, e), GObject.PRIORITY_LOW)
+            e_ = e  # Avoid reference-before-assignment error
+            GObject.idle_add(lambda x: self._handle_push_connection_error(raw_tracker_dicts, e_), GObject.PRIORITY_LOW)
             return
         else:
             post_push_comm_gen = self._post_push_comm(r, raw_tracker_dicts)
@@ -161,12 +175,14 @@ class SyncControl(GObject.Object):
         _, _, affected_notes_dict = raw_tracker_dicts
         for note in affected_notes_dict.values():
             self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
+        self.emit("global_sync_action", SYNC_ACTION_FAILURE)
         self.emit("sync_failure", SYNC_FAILURE_CONNECTION, (e, self.sync_url))
         self.sync_lock.release()
         return False
 
     def _post_push_comm(self, r, raw_tracker_dicts):
         notes_tracking_dict, note_contents_tracking_dict, affected_notes_dict = raw_tracker_dicts
+        yield True
 
         if r.status_code in (400, 500):  # Bad Request and Server Error
             for note in affected_notes_dict.values():
