@@ -56,6 +56,7 @@ class SyncControl(GObject.Object):
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
 
+        log.debug("Entering logic for pull.")
         try:
             after = kv_store["LAST_PULL_DATE"]
         except KeyError:
@@ -65,7 +66,7 @@ class SyncControl(GObject.Object):
         pull_thread.start()
 
     def _pull_comm(self, after):  # Runs in separate thread
-        log.debug("Executing pull thread")
+        log.debug("Executing pull thread.")
         if after is None:
             params = {}
         else:
@@ -103,36 +104,44 @@ class SyncControl(GObject.Object):
         GObject.idle_add(lambda x: next(pre_push_comm_gen, False), GObject.PRIORITY_LOW)
 
     def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name, instance_name, pk_name):
-        log.debug("Merging changes from pull into %s.", model_store)
-        for serialized_data in serialized_data_blocks:
-            instance = model_store.get(serialized_data)
-            if instance is not None:
-                # I have a instance that has the same id as the one coming in.
-                if instance in notonserver_tracker:
-                    # There is a new instance on the server that conflicts with a new note I've made.
-                    # We are talking about different instances. Conflict with server. Must change id of notonserver instance
-                    log.warn("UUID conflict detected in pull data for %s, %s. Trying to overcome.", instance_name, serialized_data[pk_name])
-                    old_id, new_id = model_store.rename_to_new_uuid(instance)
-                    log.debug("UUID local rename %s --> %s", old_id, new_id)
-                    note_notonserver_tracker.register_rename(old_id, new_id)
+        if len(serialized_data_blocks) > 0:
+            log.debug("Retrieved %d %s objects from server.", len(serialized_data_blocks), instance_name)
+            log.debug("Merging changes from new %s objects on server.", instance_name)
+            for serialized_data in serialized_data_blocks:
+                instance = model_store.get(serialized_data)
+                if instance is not None:
+                    # I have a instance that has the same id as the one coming in.
+                    if instance in notonserver_tracker:
+                        # There is a new instance on the server that conflicts with a new note I've made.
+                        # We are talking about different instances. Conflict with server. Must change id of notonserver instance
+                        log.warn("UUID conflict detected in pull data for %s, %s. Trying to overcome.", instance_name, serialized_data[pk_name])
+                        old_id, new_id = model_store.rename_to_new_uuid(instance)
+                        log.debug("UUID local rename %s --> %s", old_id, new_id)
+                        note_notonserver_tracker.register_rename(old_id, new_id)
+                        log.debug("Creating new %s instance for %s", instance_name, serialized_data[pk_name])
+                        new_instance = model_store.add_new(serialized_data)
+                        self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
+                        # Otherwise, something is awry with server. Server should not send conflicting instances
+                        # (which are immutable) -- thus, I ignore the change
+                else:
+                    # This is a new instance that I am unaware of.
                     log.debug("Creating new %s instance for %s", instance_name, serialized_data[pk_name])
                     new_instance = model_store.add_new(serialized_data)
                     self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
-                    # Otherwise, something is awry with server. Server should not send conflicting instances
-                    # (which are immutable) -- thus, I ignore the change
-            else:
-                # This is a new instance that I am unaware of.
-                log.debug("Creating new %s instance for %s", instance_name, serialized_data[pk_name])
-                new_instance = model_store.add_new(serialized_data)
-                self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
+                yield True
+        else:
+            log.info("No new %s objects on server.", instance_name)
             yield True
 
     def _pre_push_comm(self):
+        log.debug("Entering logic for push.")
         notonserver_notes = note_notonserver_tracker.get_all()
         notonserver_note_contents = note_content_notonserver_tracker.get_all()
         yield True
 
         if len(notonserver_notes) > 0 or len(notonserver_note_contents) > 0:
+            log.info("There are %d unsynced Note objects.", len(notonserver_notes))
+            log.info("There are %d unsynced NoteContent objects.", len(notonserver_note_contents))
             notonserver_notes_dict = {note.note_id: note for note in notonserver_notes}
             notonserver_note_contents_dict = {note_content.note_content_id: note_content for note_content in notonserver_note_contents}
             affected_notes_dict = {note_content.note_id: note_content.note for note_content in notonserver_note_contents}
@@ -159,7 +168,9 @@ class SyncControl(GObject.Object):
             self.sync_lock.release()
 
     def _push_comm(self, data, raw_tracker_dicts):  # Runs in separate thread
+        log.debug("Executing push thread.")
         try:
+            log.debug("Connecting to server for POST.")
             r = requests.post(self.sync_url, data, auth=self.auth)
         except requests.exceptions.ConnectionError as e:
             # TODO: Actual error handling logic for service unavailable, wrong network, etc.
