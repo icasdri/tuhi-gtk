@@ -132,7 +132,7 @@ class SyncControl(GObject.Object):
         notonserver_note_contents = note_content_notonserver_tracker.get_all()
         yield True
 
-        if len(notonserver_notes) > 0 and len(notonserver_note_contents) > 0:
+        if len(notonserver_notes) > 0 or len(notonserver_note_contents) > 0:
             notonserver_notes_dict = {note.note_id: note for note in notonserver_notes}
             notonserver_note_contents_dict = {note_content.note_content_id: note_content for note_content in notonserver_note_contents}
             affected_notes_dict = {note_content.note_id: note_content.note for note_content in notonserver_note_contents}
