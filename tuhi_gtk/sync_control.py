@@ -80,8 +80,7 @@ class SyncControl(GObject.Object):
             e_ = e  # Avoid reference-before-assignment error
             GObject.idle_add(lambda x: self._handle_pull_connection_error(e_), GObject.PRIORITY_LOW)
         else:
-            data = r.json()
-            post_pull_comm_gen = self._post_pull_comm(data)
+            post_pull_comm_gen = self._post_pull_comm(r)
             GObject.idle_add(lambda x: next(post_pull_comm_gen, False), GObject.PRIORITY_LOW)
 
     def _handle_pull_connection_error(self, e):
@@ -90,18 +89,22 @@ class SyncControl(GObject.Object):
         self.sync_lock.release()
         return False
 
-    def _post_pull_comm(self, res):
-        if not isinstance(res, dict):
-            log.error("Something went wrong with pull.")
+    def _post_pull_comm(self, r):
+        try:
+            data = r.json()
+        except ValueError:
+            log.critical("Server responded with malformed or missing JSON data on pull.")
+            self.emit("global_sync_action", SYNC_ACTION_FAILURE)
+            self.emit("sync_failure", SYNC_FAILURE_FATAL, "Server responded with missing or malformed JSON data on pull.")
+            self.sync_lock.release()
             return
+        else:
+            yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added", "Note", "note_id")
+            yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added", "NoteContent", "note_content_id")
+            kv_store["LAST_PULL_DATE"] = get_current_date()
 
-        data = res
-        yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added", "Note", "note_id")
-        yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added", "NoteContent", "note_content_id")
-        kv_store["LAST_PULL_DATE"] = get_current_date()
-
-        pre_push_comm_gen = self._pre_push_comm()
-        GObject.idle_add(lambda x: next(pre_push_comm_gen, False), GObject.PRIORITY_LOW)
+            pre_push_comm_gen = self._pre_push_comm()
+            GObject.idle_add(lambda x: next(pre_push_comm_gen, False), GObject.PRIORITY_LOW)
 
     def _merge_change(self, serialized_data_blocks, model_store, notonserver_tracker, syncadd_signal_name, instance_name, pk_name):
         if len(serialized_data_blocks) > 0:
@@ -196,6 +199,7 @@ class SyncControl(GObject.Object):
         yield True
 
         if r.status_code in (400, 500):  # Bad Request and Server Error
+            log.critical("Server responded with HTTP %s", r.status_code)
             for note in affected_notes_dict.values():
                 self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
             self.emit("global_sync_action", SYNC_ACTION_FAILURE)
@@ -204,6 +208,7 @@ class SyncControl(GObject.Object):
             return
 
         if r.status_code == 401:  # Unauthorized
+            log.error("Server rejected push due to an authentication issue. Server responded with HTTP 401.")
             for note in affected_notes_dict.values():
                 self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
             self.emit("global_sync_action", SYNC_ACTION_FAILURE)
@@ -222,17 +227,18 @@ class SyncControl(GObject.Object):
             return
 
         if r.status_code == 202:
-            response = r.json()
-
             try:
+                response = r.json()
                 notes_in_response = response["notes"]
                 note_contents_in_response = response["note_contents"]
-            except KeyError:
+            except (KeyError, ValueError):
+                log.critical("Server responded with malformed or missing JSON data on push.")
                 for note in affected_notes_dict.values():
                     self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
                 self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-                self.emit("sync_failure", SYNC_FAILURE_FATAL, "Server responded with HTTP {}, but with malformed or missing json data.".format(r.status_code))
+                self.emit("sync_failure", SYNC_FAILURE_FATAL, "Server responded with missing or malformed JSON data on push.")
                 self.sync_lock.release()
+                return
             else:
                 unknown_error_count = 0
 
