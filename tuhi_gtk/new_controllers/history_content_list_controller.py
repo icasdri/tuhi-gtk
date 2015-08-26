@@ -53,6 +53,7 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
             if self.list is not None:
                 self.list.destroy()
             self.list = None
+            self.current_note = note
 
     def do_first_view_activate(self):
         self.builder = Gtk.Builder.new_from_file(get_ui_file("history_content_list"))
@@ -60,17 +61,23 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
         self.list.set_sort_func(sort_func)
         self.list.show_all()
         self.window.get_controller("history").get_object("history_popover_box").add(self.list)
-        self.default_query = NoteContent.query_for_note(self.window.current_note)
-        ListControllerMixin.__init__(self)
-        self.signal_listener_id = self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
-        self.initial_populate()
-        self.selection_signal_listener_id = self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
+        if self.current_note is None:
+            self.current_note_changed(self.window.current_note)
+        if self.current_note is None:  # if it's is still None
+            log.error("History content popover should not be able to be activated for no Note (current_note is None).")
+        else:
+            self.default_query = NoteContent.query_for_note(self.current_note)
+            ListControllerMixin.__init__(self)
+            self.signal_listener_id = self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
+            self.initial_populate()
+            self.selection_signal_listener_id = self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
 
     def do_view_activate(self):
         self.select_item(self.window.current_note_content)
 
     def handle_new_note_content(self, note_content, reason):
         if self.list is not None:
+            #if note_content is not None and note_content.note
             self.add_item(note_content)
 
     def row_selected_callback(self, row):
