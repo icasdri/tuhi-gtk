@@ -34,12 +34,6 @@ def get_log_for_prefix_tuple(log_prefix_tuple):
         log_lookup[log_prefix_tuple] = log
         return log
 
-class LogInjectedObject(object):
-    log_prefix_tuple = tuple()
-
-    def __init__(self):
-        self.log = get_log_for_prefix_tuple(self.log_prefix_tuple)
-
 class PrefixTupleFormatter(logging.Formatter):
     def __init__(self, log_prefix_tuple):
         self.log_prefix_tuple = log_prefix_tuple
