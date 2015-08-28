@@ -18,8 +18,6 @@
 from gi.repository import Gtk
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
-from tuhi_gtk.controllers.controller import Controller
-from tuhi_gtk.controllers.history_content_list_controller import HistoryContentListController
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.util import ignore_all_args_function, property_change_function
 
