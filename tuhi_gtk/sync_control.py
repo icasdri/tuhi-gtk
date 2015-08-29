@@ -120,7 +120,7 @@ class SyncControl(GObject.Object):
                         log.warn("UUID conflict detected in pull data for %s, %s. Trying to overcome.", instance_name, serialized_data[pk_name])
                         old_id, new_id = model_store.rename_to_new_uuid(instance)
                         log.debug("UUID local rename %s --> %s", old_id, new_id)
-                        note_notonserver_tracker.register_rename(old_id, new_id)
+                        notonserver_tracker.register_rename(old_id, new_id)
                         log.debug("Creating new %s instance for %s", instance_name, serialized_data[pk_name])
                         new_instance = model_store.add_new(serialized_data)
                         self.global_r.emit(syncadd_signal_name, new_instance, REASON_SYNC)
