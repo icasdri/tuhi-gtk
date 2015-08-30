@@ -94,11 +94,6 @@ class SourceViewController(SubwindowInterfaceController):
         if self.activity_count < 1:
             self.activity_count = 1
 
-    def session_timeout_callback(self):
-        log.info("Session has timed out")
-        self.session_timed_out = True
-        return True
-
     def checker_callback(self):
         # print("Checker Callback: activity %d | inactivity %d" % (self.current.activity_count, self.current.inactivity_count))
         if self.inactivity_count > 0:
