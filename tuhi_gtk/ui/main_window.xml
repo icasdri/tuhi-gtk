@@ -25,9 +25,6 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="GtkImage" id="icon_new_note_fallback">
         <property name="icon_name">document-new-symbolic</property>
     </object>
-    <object class="GtkImage" id="icon_sync_notes">
-        <property name="icon_name">emblem-synchronizing-symbolic</property>
-    </object>
     <object class="GtkImage" id="icon_search">
         <property name="icon_name">system-search-symbolic</property>
     </object>
@@ -39,6 +36,18 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     </object>
     <object class="GtkImage" id="icon_menu">
         <property name="icon_name">open-menu-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_sync_notes">
+        <property name="icon_name">emblem-synchronizing-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_sync_notes_failed">
+        <property name="icon_name">network-error-symbolic</property>
+    </object>
+    <object class="GtkImage" id="icon_sync_notes_success">
+        <property name="icon_name">emblem-default-symbolic</property>
+    </object>
+    <object class="GtkSpinner" id="sync_button_spinner">
+
     </object>
     <object class="GtkApplicationWindow" id="main_window">
         <property name="default-width">970</property>
@@ -53,9 +62,12 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                     <object class="GtkHeaderBar" id="side_hb">
                         <property name="title">Tuhi</property>
                         <child>
-                            <object class="GtkButton">
-                                <property name="image">icon_sync_notes</property>
-                                <signal name="clicked" handler="delete_note_clicked"/>
+                            <object class="GtkButton" id="sync_button">
+                                <child>
+                                    <object class="GtkBox" id="sync_button_box">
+
+                                    </object>
+                                </child>
                             </object>
                             <packing>
                                 <property name="pack-type">start</property>
