@@ -51,4 +51,12 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="GtkLabel" id="failure_label">
         <property name="label">Sync Failed</property>
     </object>
+    <object class="GtkImage" id="synced_in_emblem">
+        <property name="icon_name">radio-checked-symbolic</property>
+        <property name="icon_size">0</property>
+    </object>
+    <object class="GtkImage" id="unsynced_emblem">
+        <property name="icon_name">radio-symbolic</property>
+        <property name="icon_size">0</property>
+    </object>
 </interface>

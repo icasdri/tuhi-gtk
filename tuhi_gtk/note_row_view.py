@@ -18,23 +18,25 @@
 from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
+from tuhi_gtk.feature_view_mixin import FeatureViewMixin
 
 log = get_log_for_prefix_tuple(("ui", "note_row"))
 
 # dict mapping feature_name -> (feature_widget_id, show_func, hide_func)
 FEATURES = {
     "spinner": ("spinner", lambda w: w.start(), lambda w: w.stop()),
-    "failure_label": ("failure_label", None, None)
+    "failure_label": ("failure_label", None, None),
+    "synced_in_emblem": ("synced_in_emblem", None, None),
+    "unsynced_emblem": ("unsynced_emblem", None, None)
 }
 
-class NoteRow(Gtk.ListBoxRow):
+class NoteRow(Gtk.ListBoxRow, FeatureViewMixin):
     def initialize(self, builder, note):
         self.builder = builder
         self._label = builder.get_object("label")
         self._box = builder.get_object("box")
-        self._spinner = builder.get_object("spinner")
         self.note = note
-        self._current_feature = None
+        FeatureViewMixin.__init__(self, FEATURES, self._box, self.builder, padding=12)
         self.refresh()
 
     @staticmethod
@@ -44,31 +46,6 @@ class NoteRow(Gtk.ListBoxRow):
         note_row.initialize(builder, note)
         return note_row
 
-    def show_feature(self, feature):
-        if self._current_feature == feature:
-            return
-        self.hide_feature()
-        widget_id, show_func, _ = FEATURES[feature]
-        widget = self.builder.get_object(widget_id)
-        self._box.pack_end(widget, expand=False, fill=False, padding=12)
-        widget.show()
-        if show_func is not None:
-            show_func(widget)
-        self._current_feature = feature
-
-    def hide_feature(self, feature=None):
-        if self._current_feature is None:
-            return
-        if feature is not None and feature != self._current_feature:
-            return
-        widget_id, _, hide_func = FEATURES[self._current_feature]
-        widget = self.builder.get_object(widget_id)
-        if hide_func is not None:
-            hide_func(widget)
-        widget.hide()
-        self._box.remove(widget)
-        self._current_feature = None
-
     def refresh(self):
         log.debug("Refreshing NoteRow: (%s) '%s'", self.note.note_id, self.note.title)
         self._label.set_text(self.note.title)
@@ -77,7 +54,6 @@ class NoteRow(Gtk.ListBoxRow):
     def mark(self, mark):
         if mark == "saved":
             print("Mark saved called: (%s) '%s'" % (self.note.note_id, self.note.title))
-            # self.spinner_start()
             self.refresh()
         else:
             log.warn("Unknown NoteRow mark: %s", mark)
