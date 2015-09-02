@@ -340,16 +340,9 @@ class Tracker(object):
         db_session.commmit()
 
     def discard_successes(self, successes):
-        self.tracking_model.query.filter(getattr(self.tracking_model, self.pk_name).in_(successes)).delete()
-        db_session.commit()
-
-    def discard_all_but_failures(self, failures):
-        self.tracking_model.query.filter(getattr(self.tracking_model, self.pk_name).notin_(failures))\
-                                 .delete(synchronize_session='fetch')
-        db_session.commit()
-
-    def discard_all(self):
-        self.tracking_model.query.delete()
+        if len(successes) > 0:  # Prevent expensive empty IN-predicate evaluation
+            self.tracking_model.query.filter(getattr(self.tracking_model, self.pk_name).in_(successes))\
+                                     .delete(synchronize_session='fetch')
         db_session.commit()
 
     def register_rename(self, old_id, new_id):
