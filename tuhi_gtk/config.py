@@ -34,7 +34,6 @@ UI_EXTENSION = ".xml"
 
 SYNCSERVER_NOTES_ENDPOINT = "/notes"
 
-SESSION_TIMEOUT = 10 * 60 * 1000  # 10 minutes
 BUFFER_ACTIVITY_CHECKERS_RESOLUTION = 1000
 BUFFER_INACTIVITY_TARGET_COUNT = 5
 BUFFER_ACTIVITY_TARGET_COUNT = 30
@@ -47,6 +46,12 @@ REASON_SYNC = "sync"
 SYNC_ACTION_BEGIN = "begin"
 SYNC_ACTION_SUCCESS = "success"
 SYNC_ACTION_FAILURE = "failure"
+
+SYNC_FAILURE_FATAL = "fatal"
+SYNC_FAILURE_CONNECTION = "connection"
+SYNC_FAILURE_AUTHENTICATION = "authentication"
+SYNC_FAILURE_FINGERPRINT = "fingerprint"
+SYNC_FAILURE_SSLHANDSHAKE = "sslhandshake"
 
 def get_ui_file(ui_name):
     return resource_filename(__name__, os.path.join(UI_BASEDIR, ui_name + UI_EXTENSION))
