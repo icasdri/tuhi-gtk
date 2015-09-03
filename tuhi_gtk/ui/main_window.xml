@@ -128,10 +128,24 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                             </packing>
                         </child>
                         <child>
-                            <object class="GtkToggleButton" id="history_popover_toggle_button">
-                                <property name="image">icon_history_details</property>
-                                <property name="sensitive">false</property>
-                                <signal name="toggled" handler="toggle_history_popover"/>
+                            <object class="GtkBox">
+                                <property name="spacing">0</property>
+                                <style>
+                                    <class name="raised"/>
+                                    <class name="linked"/>
+                                </style>
+                                <child>
+                                    <object class="GtkToggleButton" id="note_details_toggle_button">
+                                        <property name="image">icon_note_details</property>
+                                        <property name="sensitive">false</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkToggleButton" id="history_popover_toggle_button">
+                                        <property name="image">icon_history_details</property>
+                                        <property name="sensitive">false</property>
+                                    </object>
+                                </child>
                             </object>
                             <packing>
                                 <property name="pack-type">end</property>
