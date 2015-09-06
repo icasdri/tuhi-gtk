@@ -16,14 +16,19 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
+from tuhi_gtk.database import Note
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.util import ignore_all_args_function
+from tuhi_gtk.new_controllers.tree_list_store_controller_mixin import TreeListStoreControllerMixin
+from tuhi_gtk.util import ignore_all_args_function, format_date
 
 log = get_log_for_prefix_tuple(("co", "trash"))
 
-class TrashController(SubwindowInterfaceController):
+MODEL_COLUMN_MAPPING = [lambda x: format_date(x.date_content_modified), lambda x: x.title]
+
+
+class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin):
     def do_init(self):
         self.window.register_controller("trash", self)
         self.window.get_controller("options_popover").connect("view_activated_for_first_time",
@@ -44,12 +49,11 @@ class TrashController(SubwindowInterfaceController):
         self.get_object("treeview").append_column(Gtk.TreeViewColumn("Date Deleted", Gtk.CellRendererText(), text=0))
         self.get_object("treeview").append_column(Gtk.TreeViewColumn("Ttile", Gtk.CellRendererText(), text=1))
 
+        TreeListStoreControllerMixin.__init__(self, self.liststore, MODEL_COLUMN_MAPPING, Note.soft_deleted(), lambda x: x.note_id)
+        self.initial_populate()
+
         self.get_object("trash_window").set_transient_for(self.window.get_object("main_window"))
         self.do_view_activate()
-        # self.get_object("liststore").insert_with_valuesv(0, (0, 1), ("Hello Word", "2014-02-02"))
-        it = self.liststore.append(["Test", "TestTestTest"])
-        # self.get_object("treeview").show_all()
-
 
     def do_view_activate(self):
         self.get_object("trash_window").show_all()
