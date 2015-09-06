@@ -16,17 +16,14 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 class ListControllerMixin(object):
-    list_name = "Base List"
-    controller_name = "Base List Controller"
-    model = None
     default_query = None
 
     def __init__(self):
         self.lookup = {}
 
     def initial_populate(self):
-        for note in self.default_query.all():
-            self.add_item(note)
+        for item in self.default_query.all():
+            self.add_item(item)
 
     @staticmethod
     def _item_id(item):
