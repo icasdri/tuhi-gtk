@@ -20,8 +20,9 @@ from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
+from tuhi_gtk.util import ignore_all_args_function
 
-log = get_log_for_prefix_tuple(("co", "opts"))
+log = get_log_for_prefix_tuple(("co", "prefs"))
 
 DEFAULT_PREFERENCES_VALUES = {
     "SYNCSERVER_URL": "http://test.local/",
@@ -50,26 +51,29 @@ RENDER_RELATIONSHIPS = {
     "EDITOR_BORDER_WIDTH": ("editor_border_width_spinbutton", "set_value", "get_value", float, int)
 }
 
-class OptionsController(SubwindowInterfaceController):
+class PreferencesController(SubwindowInterfaceController):
     def do_init(self):
-        self.window.register_controller("options", self)
+        self.window.register_controller("preferences", self)
         self.init_default_preferences_in_db()
-        self._make_sibling_controllers([
-            "OptionsPopoverController"
-        ])
+        self.window.get_controller("options_popover").connect("view_activated_for_first_time",
+                                                              ignore_all_args_function(self.init_after_popover_first_activate))
+
+    def init_after_popover_first_activate(self):
+        self.window.get_controller("options_popover") \
+            .get_object("preferences_button").connect("clicked", ignore_all_args_function(self.view_activate))
 
     def do_first_view_activate(self):
-        self.builder = Gtk.Builder.new_from_file(get_ui_file("options_window"))
+        self.builder = Gtk.Builder.new_from_file(get_ui_file("preferences_window"))
         self.builder.connect_signals(self)
-        self.get_object("options_window").set_transient_for(self.window.get_object("main_window"))
+        self.get_object("preferences_window").set_transient_for(self.window.get_object("main_window"))
         self.do_view_activate()
 
     def do_view_activate(self):
-        self.get_object("options_window").show_all()
+        self.get_object("preferences_window").show_all()
         self.populate_preferences_from_db()
-        self.get_object("options_window").present()
+        self.get_object("preferences_window").present()
 
-    def option_window_closed(self, window, event):
+    def preferences_window_closed(self, window, event):
         self.save_preferences_to_db()
         window.hide()
         return True  # Stop event from propagating
