@@ -19,7 +19,7 @@ from gi.repository import GObject, Gtk, GtkSource
 from tuhi_gtk.config import BUFFER_ACTIVITY_CHECKERS_RESOLUTION, REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import property_change_function, ignore_all_args_function
-from tuhi_gtk.database import db_session, NoteContent, kv_store
+from tuhi_gtk.database import db_session, NoteContent, kv_store, NC_TYPE_PLAIN
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 
 log = get_log_for_prefix_tuple(("co", "srcview"))
@@ -135,7 +135,7 @@ class SourceViewController(SubwindowInterfaceController):
 
         if new_data != old_data:
             log.info("Saving note: (%s) '%s'", note.note_id, note.title)
-            new_content = NoteContent(note=note, data=new_data, type=10000000)
+            new_content = NoteContent(note=note, data=new_data, type=NC_TYPE_PLAIN)
             db_session.add(new_content)
             db_session.commit()
 
