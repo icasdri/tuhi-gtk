@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from tuhi_gtk.config import REASON_USER, SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
+from tuhi_gtk.config import REASON_USER, REASON_SYNC, \
+    SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function, property_change_function
-from tuhi_gtk.database import kv_store, Note, NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE
+from tuhi_gtk.database import note_notonserver_tracker, note_content_notonserver_tracker, kv_store, Note, \
+    NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.note_row_view import NoteRow
 from tuhi_gtk.new_controllers.list_controller_mixin import ListControllerMixin
@@ -42,10 +44,14 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
         self.global_r.connect("note-added", ignore_sender_function(self.handle_new_note))
         self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
         self.initial_populate()
+        for note in note_notonserver_tracker.get_all():
+            self._get_row(note).show_feature("unsynced_emblem")
+        for note_content in note_content_notonserver_tracker.get_all():
+            self._get_row(note_content.note).show_feature("unsynced_emblem")
         self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
         self.window.connect("notify::current-note", property_change_function(self.handle_window_current_note_change))
         self.global_r.connect("note-metadata-changed", ignore_sender_function(self.handle_note_metadata_change))
-        self.global_r.sync_control.connect("note-sync-action", ignore_sender_function(self.handle_note_sync_action))
+        self.global_r.sync_control.connect("sync-action-for-note", ignore_sender_function(self.handle_sync_action_for_note))
         last_note_selected = None
         if "LAST_NOTE_SELECTED" in kv_store:
             last_note_selected = Note.query.filter(Note.note_id == kv_store["LAST_NOTE_SELECTED"]).first()
@@ -54,7 +60,7 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
         log.debug("Selecting last note selected")
         self.select_item(last_note_selected)
 
-    def handle_note_sync_action(self, note, sync_action):
+    def handle_sync_action_for_note(self, note, sync_action):
         log.debug("Recieved Note Sync Action: %s: %s", note.note_id, sync_action)
         row = self._ro_get_row(note)
         if row is not None:
@@ -62,23 +68,37 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
                 row.show_feature("spinner")
             elif sync_action == SYNC_ACTION_SUCCESS:
                 row.hide_feature("spinner")
+                row.hide_feature("unsynced_emblem")
             elif sync_action == SYNC_ACTION_FAILURE:
                 row.show_feature("failure_label")
 
     def handle_window_current_note_change(self, note):
         if self.list.get_selected_row() != note:
             self.select_item(note)
+        if note is not None:
+            self._get_row(note).hide_feature("synced_in_emblem")
 
     def handle_note_metadata_change(self, note, reason):
         self._get_row(note).refresh()
 
     def handle_new_note(self, note, reason):
         self.add_item(note)
+        if note is not None:
+            if reason == REASON_SYNC:
+                self._get_row(note).show_feature("synced_in_emblem")
+            else:
+                self._get_row(note).show_feature("unsynced_emblem")
 
     def handle_new_note_content(self, note_content, reason):
         if note_content.type in (NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE):
             if reason == REASON_USER or note_content.note != self.window.current_note:
                 self.remove_item(note_content.note)
+        else:
+            if note_content is not None:
+                if reason == REASON_SYNC:
+                    self._get_row(note_content.note).show_feature("synced_in_emblem")
+                else:
+                    self._get_row(note_content.note).show_feature("unsynced_emblem")
 
     def row_selected_callback(self, row):
         if row is None:
