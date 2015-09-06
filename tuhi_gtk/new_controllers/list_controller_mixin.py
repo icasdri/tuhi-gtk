@@ -35,6 +35,12 @@ class ListControllerMixin(object):
     def _create_row(self, item):
         return None
 
+    def _ro_get_row(self, item):
+        item_id = self._item_id(item)
+        if item_id in self.lookup:
+            return self.lookup[item_id]
+        return None
+
     def _get_row(self, item):
         item_id = self._item_id(item)
         if item_id is None:
