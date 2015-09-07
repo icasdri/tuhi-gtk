@@ -17,6 +17,7 @@
 from datetime import datetime
 from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.util import format_date
 
 
 class HistoryContentRow(Gtk.ListBoxRow):
@@ -34,7 +35,7 @@ class HistoryContentRow(Gtk.ListBoxRow):
         return history_content_row
 
     def refresh(self):
-        self.label.set_text(datetime.fromtimestamp(self.note_content.date_created).strftime("%b %d, %I:%m:%S %p"))
+        self.label.set_text(format_date(self.note_content.date_created))
 
 
 def get_history_content_list():

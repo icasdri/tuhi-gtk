@@ -16,6 +16,8 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 # Wrappers for handling GObject callback signals with extra parameters
+from datetime import datetime
+
 
 def ignore_sender_function(func):
     # _ is sender var.
@@ -47,3 +49,6 @@ def underscore_camelcase(camel_str):
             result += camel_str[last_index:i].lower() + "_"
             last_index = i
     return result + camel_str[last_index:].lower()
+
+def format_date(epoch_int):
+    return datetime.fromtimestamp(epoch_int).strftime("%b %d, %I:%m:%S %p")
