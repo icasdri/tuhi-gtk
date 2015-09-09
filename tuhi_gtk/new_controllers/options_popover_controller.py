@@ -20,34 +20,23 @@ from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import ignore_all_args_function
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.new_controllers.popover_controller_mixin import PopoverControllerMixin
 
 log = get_log_for_prefix_tuple(("co", "opts_p"))
 
-class OptionsPopoverController(SubwindowInterfaceController):
+class OptionsPopoverController(SubwindowInterfaceController, PopoverControllerMixin):
     def do_init(self):
         self.window.register_controller("options_popover", self)
+        PopoverControllerMixin.__init__(self, self.window, "options_popover_toggle_button", "options_popover")
         self.window.connect("view-activated", ignore_all_args_function(self.init_after_window_activate))
 
     def init_after_window_activate(self):
-        self.toggle_button = self.window.get_object("options_popover_toggle_button")
-        self.toggle_button.connect("toggled", self.options_popover_button_toggled)
+        self.connect_popover_toggle_button()
 
     def do_first_view_activate(self):
-        self.builder = Gtk.Builder.new_from_file(get_ui_file("options_popover"))
-        self.options_popover = self.builder.get_object("options_popover")
-        self.options_popover.set_relative_to(self.toggle_button)
+        self.init_popover()
         self.builder.connect_signals(self)
 
     def do_view_activate(self):
-        self.options_popover.show_all()
+        self.show_popover()
 
-    def options_popover_button_toggled(self, toggle_button):
-        if toggle_button.get_active():
-            self.view_activate()
-
-    def options_popover_closed(self, _):
-        self.toggle_button.set_active(False)
-
-    def preferences_option_button_clicked(self, _):
-        self.window.get_controller("options").view_activate()
-        self.options_popover.hide()
