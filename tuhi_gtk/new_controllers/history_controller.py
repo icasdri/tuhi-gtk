@@ -18,42 +18,34 @@
 from gi.repository import Gtk
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.util import ignore_all_args_function, property_change_function
+from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.new_controllers.popover_controller_mixin import PopoverControllerMixin
 
 log = get_log_for_prefix_tuple(("co", "hist"))
 
-class HistoryController(SubwindowInterfaceController):
+class HistoryController(SubwindowInterfaceController, PopoverControllerMixin):
     def do_init(self):
         self.window.register_controller("history", self)
+        PopoverControllerMixin.__init__(self, self.window, "history_popover_toggle_button", "history_popover")
         self.window.connect("view-activated", ignore_all_args_function(self.init_after_window_activate))
         self._make_sibling_controllers([
             "HistoryContentListController"
         ])
 
     def init_after_window_activate(self):
-        self.toggle_button = self.window.get_object("history_popover_toggle_button")
-        self.toggle_button.connect("toggled", self.history_popover_button_toggled)
+        self.connect_popover_toggle_button()
         self.window.connect("notify::current-note", property_change_function(self.current_note_changed))
         self.current_note_changed(self.window.current_note)
 
     def do_first_view_activate(self):
-        self.builder = Gtk.Builder.new_from_file(get_ui_file("history_popover"))
-        self.history_popover = self.builder.get_object("history_popover")
-        self.history_popover.set_relative_to(self.toggle_button)
+        self.init_popover()
         self.builder.connect_signals(self)
 
     def do_view_activate(self):
         self.window.get_controller("source_view").save_current_note()
-        self.history_popover.show_all()
+        self.show_popover()
 
     def current_note_changed(self, note):
-        self.toggle_button.set_sensitive(note is not None)
-
-    def history_popover_button_toggled(self, toggle_button):
-        if toggle_button.get_active():
-            self.view_activate()
-
-    def history_popover_closed(self, popover):
-        self.toggle_button.set_active(False)
+        self.popover_toggle_button.set_sensitive(note is not None)
 
