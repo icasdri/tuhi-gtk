@@ -30,26 +30,35 @@ class TreeListStoreControllerMixin(object):
         for item in self.__default_query.all():
             self.add_item(item)
 
-    def __get_it(self, item):
+    def get_treeiter(self, item):
         return self.__lookup_it[self.__item_id_func(item)]
 
     def get_item(self, it):
         return self.__lookup_item[it.stamp]
 
     def add_item(self, item):
-        values = list(map(lambda x: x(item), self.__columns))
-        it = self.__liststore.append(values)
-        self.__lookup_it[self.__item_id_func(item)] = it
-        self.__lookup_item[it.stamp] = item
+        if item is None:
+            return
+        item_id = self.__item_id_func(item)
+        if item_id not in self.__lookup_it:
+            values = list(map(lambda x: x(item), self.__columns))
+            it = self.__liststore.append(values)
+            self.__lookup_it[self.__item_id_func(item)] = it
+            self.__lookup_item[it.stamp] = item
+            it.tuhi_item = item
 
     def remove_item(self, item):
-        it = self.__get_it(item)
-        self.__liststore.remove(it)
-        del self.__lookup_it[self.__item_id_func(item)]
-        del self.__lookup_item[it.stamp]
+        if item is None:
+            return
+        item_id = self.__item_id_func(item)
+        if item_id in self.__lookup_it:
+            it = self.get_treeiter(item)
+            self.__liststore.remove(it)
+            del self.__lookup_it[self.__item_id_func(item)]
+            del self.__lookup_item[it.stamp]
 
     def refresh_item(self, item):
-        it = self.__get_it(item)
+        it = self.get_treeiter(item)
         for col, val in enumerate(self.__columns):
             self.__liststore.set_value(it, col, val(item))
 
