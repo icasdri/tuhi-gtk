@@ -81,9 +81,7 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
             self.add_item(note_content)
 
     def row_selected_callback(self, row):
-        if row is None:
-            self.window.current_note_content = None
-        else:
+        if row is not None:
             self.window.current_note_content = row.note_content
 
     def do_shutdown(self):
