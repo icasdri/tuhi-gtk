@@ -16,12 +16,12 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
-from tuhi_gtk.database import Note
+from tuhi_gtk.database import Note, NC_TYPE_PERMA_DELETE
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.new_controllers.tree_list_store_controller_mixin import TreeListStoreControllerMixin
-from tuhi_gtk.util import ignore_all_args_function, format_date
+from tuhi_gtk.util import ignore_all_args_function, format_date, ignore_sender_function
 
 log = get_log_for_prefix_tuple(("co", "trash"))
 
@@ -52,6 +52,8 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
         TreeListStoreControllerMixin.__init__(self, self.liststore, MODEL_COLUMN_MAPPING, Note.soft_deleted(), lambda x: x.note_id)
         self.initial_populate()
 
+        self.global_r.connect("note_metadata_changed", ignore_sender_function(self.handle_note_metadata_changed))
+
         self.get_object("trash_window").set_transient_for(self.window.get_object("main_window"))
         self.do_view_activate()
 
@@ -63,4 +65,10 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
         # TODO: Should we reconstruct this window every time?
         window.hide()
         return True  # Stop event from propagating
+
+    def handle_note_metadata_changed(self, note, reason):
+        if note.type == NC_TYPE_PERMA_DELETE or note.type > 0:
+            self.remove_item(note)
+        else:
+            self.add_item(note)
 
