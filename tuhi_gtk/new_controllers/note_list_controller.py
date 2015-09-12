@@ -19,8 +19,7 @@ from tuhi_gtk.config import REASON_USER, REASON_SYNC, \
     SYNC_ACTION_BEGIN, SYNC_ACTION_FAILURE, SYNC_ACTION_SUCCESS
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function, property_change_function
-from tuhi_gtk.database import note_notonserver_tracker, note_content_notonserver_tracker, kv_store, Note, \
-    NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE
+from tuhi_gtk.database import note_notonserver_tracker, note_content_notonserver_tracker, kv_store, Note, NC_TYPE_PERMA_DELETE
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.note_row_view import NoteRow
 from tuhi_gtk.new_controllers.list_controller_mixin import ListControllerMixin
@@ -79,26 +78,26 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
             self._get_row(note).hide_feature("synced_in_emblem")
 
     def handle_note_metadata_change(self, note, reason):
-        self._get_row(note).refresh()
+        if note is not None:
+            if note.type > 0:
+                self.refresh_item(note)
+            else:  # note.type < 0 (including perma delete!)
+                self.remove_item(note)
 
     def handle_new_note(self, note, reason):
         self.add_item(note)
-        if note is not None:
+        if note is not None and note.type > 0:
             if reason == REASON_SYNC:
                 self._get_row(note).show_feature("synced_in_emblem")
             else:
                 self._get_row(note).show_feature("unsynced_emblem")
 
     def handle_new_note_content(self, note_content, reason):
-        if note_content.type in (NC_TYPE_TRASHED, NC_TYPE_PERMA_DELETE):
-            if reason == REASON_USER or note_content.note != self.window.current_note:
-                self.remove_item(note_content.note)
-        else:
-            if note_content is not None:
-                if reason == REASON_SYNC:
-                    self._get_row(note_content.note).show_feature("synced_in_emblem")
-                else:
-                    self._get_row(note_content.note).show_feature("unsynced_emblem")
+        if note_content is not None:
+            if reason == REASON_SYNC:
+                self._get_row(note_content.note).show_feature("synced_in_emblem")
+            else:
+                self._get_row(note_content.note).show_feature("unsynced_emblem")
 
     def row_selected_callback(self, row):
         if row is None:
