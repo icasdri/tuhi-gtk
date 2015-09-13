@@ -25,7 +25,7 @@ from tuhi_gtk.util import ignore_all_args_function, format_date, ignore_sender_f
 
 log = get_log_for_prefix_tuple(("co", "trash"))
 
-MODEL_COLUMN_MAPPING = [lambda x: format_date(x.date_content_modified), lambda x: x.title]
+MODEL_COLUMN_MAPPING = [lambda x: x.note_id, lambda x: format_date(x.date_content_modified), lambda x: x.title]
 
 
 class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin):
@@ -40,19 +40,24 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
 
     def do_first_view_activate(self):
         self.builder = Gtk.Builder.new_from_file(get_ui_file("trash_window"))
-        self.liststore = Gtk.ListStore(str, str)
+        self.liststore = Gtk.ListStore(str, str, str)
         self.get_object("treeview").set_model(self.liststore)
         self.builder.expose_object("liststore", self.liststore)
         self.builder.connect_signals(self)
 
         # Make our columns. Text corresponds to position of column in liststore model.
-        self.get_object("treeview").append_column(Gtk.TreeViewColumn("Date Deleted", Gtk.CellRendererText(), text=0))
-        self.get_object("treeview").append_column(Gtk.TreeViewColumn("Ttile", Gtk.CellRendererText(), text=1))
+        id_col = Gtk.TreeViewColumn("id")  # Hidden column for storing application data
+        id_col.set_visible(False)
+        self.get_object("treeview").append_column(id_col)
+        self.get_object("treeview").append_column(Gtk.TreeViewColumn("Date Deleted", Gtk.CellRendererText(), text=1))
+        self.get_object("treeview").append_column(Gtk.TreeViewColumn("Ttile", Gtk.CellRendererText(), text=2))
 
-        TreeListStoreControllerMixin.__init__(self, self.liststore, MODEL_COLUMN_MAPPING, Note.soft_deleted(), lambda x: x.note_id)
+        TreeListStoreControllerMixin.__init__(self, self.liststore, MODEL_COLUMN_MAPPING, Note.soft_deleted())
         self.initial_populate()
 
         self.global_r.connect("note_metadata_changed", ignore_sender_function(self.handle_note_metadata_changed))
+
+        self.builder.connect_signals(self)
 
         self.get_object("trash_window").set_transient_for(self.window.get_object("main_window"))
         self.do_view_activate()
@@ -71,4 +76,14 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
             self.remove_item(note)
         else:
             self.add_item(note)
+
+    def restore_button_clicked(self, _):
+        # TODO: TESTING ONLY: this is NOT the actual restore logic. Just some testing code to show that get_item is working.
+        _, it = self.get_object("treeview").get_selection().get_selected()
+        if it is not None:
+            note = self.get_item(it)
+            print(note.note_id, ": ", note.title)
+
+    def delete_permanently_button_clicked(self, _):
+        pass
 
