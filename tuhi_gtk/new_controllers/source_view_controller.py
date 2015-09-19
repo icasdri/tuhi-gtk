@@ -78,13 +78,11 @@ class SourceViewController(SubwindowInterfaceController):
         log.debug("Activating Note Content: %s", content.note_content_id if content is not None else "None")
         self.current_note_content = content
 
+        self.current_buffer = GtkSource.Buffer()
         if content is not None:
-            self.current_buffer = GtkSource.Buffer()
             self.current_buffer.begin_not_undoable_action()
             self.current_buffer.set_text(content.data)
             self.current_buffer.end_not_undoable_action()
-        else:
-            self.current_buffer = Gtk.TextBuffer()
 
         self.source_view.set_buffer(self.current_buffer)
         self.current_buffer.connect("changed", self.buffer_changed)
