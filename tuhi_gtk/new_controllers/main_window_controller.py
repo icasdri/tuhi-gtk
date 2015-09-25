@@ -33,9 +33,11 @@ class MainWindowController(WindowController):
             "SourceViewController",
             "NoteListController",
             "HistoryController",
-            "OptionsController",
+            "OptionsPopoverController",
             "NewNoteController",
-            "SyncButtonController"
+            "SyncButtonController",
+            "PreferencesController",
+            "TrashController"
         ])
 
     def do_first_view_activate(self):
