@@ -180,11 +180,16 @@ class Note(Base):
                 need_commit = True
 
             # title recalculation
-            new_title = content.get_title()
-            if new_title.strip() == "":
-                self.title = "Untitled Note"
-            elif self.title != new_title:
+            if self.type == NC_TYPE_PERMA_DELETE:
+                new_title = ""
+            else:
+                new_title = content.get_title()
+                if new_title.strip() == "":
+                    new_title = "Untitled Note"
+
+            if self.title != new_title:
                 self.title = new_title
+                need_commit = True
 
             if need_commit:
                 db_session.commit()
