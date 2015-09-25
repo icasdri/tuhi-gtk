@@ -18,7 +18,7 @@
 from gi.repository import Gtk, GObject
 from tuhi_gtk.database import Note, NC_TYPE_PERMA_DELETE
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
-from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.config import get_ui_file, REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.new_controllers.tree_list_store_controller_mixin import TreeListStoreControllerMixin
 from tuhi_gtk.util import ignore_all_args_function, format_date, ignore_sender_function, property_change_function
@@ -110,6 +110,8 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
         note = self.note_to_be_deleted
         if note is not None:
             log.info("Permanently deleting note %s", note.note_id)
+            perma_delete_nc = note.delete_permanently()
+            self.global_r.emit("note_content_added", perma_delete_nc, REASON_USER)
             self.note_to_be_deleted = None
 
     def handle_treeview_selection_changed(self, tree_selection):
