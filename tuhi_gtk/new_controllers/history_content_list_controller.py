@@ -27,9 +27,6 @@ from tuhi_gtk.history_content_row import HistoryContentRow
 log = get_log_for_prefix_tuple(("co", "hist_c_l"))
 
 class HistoryContentListController(SubwindowInterfaceController, ListControllerMixin):
-    list_name = "History Content List"
-    controller_name = "History Content List Controller"
-    model = NoteContent
     default_query = None
 
     def do_init(self):

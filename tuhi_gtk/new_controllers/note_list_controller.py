@@ -27,9 +27,6 @@ from tuhi_gtk.new_controllers.list_controller_mixin import ListControllerMixin
 log = get_log_for_prefix_tuple(("co", "note_l"))
 
 class NoteListController(SubwindowInterfaceController, ListControllerMixin):
-    list_name = "Note List"
-    controller_name = "Note List Controller"
-    model = Note
     default_query = Note.non_deleted()
 
     def do_init(self):
