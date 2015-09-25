@@ -133,12 +133,14 @@ def new_uuid():
 #     else:
 #         return get_current_date()
 
+NC_TYPE_PLAIN = 10000000
+NC_TYPE_PERMA_DELETE = -2
+
 class Note(Base):
     __tablename__ = 'notes'
     note_id = Column(CHAR(36), primary_key=True)
     title = Column(String)
-    # Use a NoteContent with type = deleted
-    deleted = Column(Boolean, default=False)
+    type = Column(Integer, default=NC_TYPE_PLAIN)
     date_created = Column(Integer, index=True, nullable=True, default=get_current_date)  # Seconds from epoch
     date_content_modified = Column(Integer, index=True, nullable=True)  # Seconds from epoch
 
@@ -165,12 +167,17 @@ class Note(Base):
         log.debug("Refreshing metadata for: (%s) '%s'", self.note_id, self.title)
         content = self.get_head_content()
         if content is not None:
+            need_commit = False
+
             # date_content_modified recalculation
             if self.date_content_modified < content.date_created:
                 self.date_content_modified = content.date_created
+                need_commit = True
 
             # deleted flag recalculation
-            self.deleted = content.type < 0 or content.type == NC_TYPE_PERMA_DELETE
+            if self.type != content.type:
+                self.type = content.type
+                need_commit = True
 
             # title recalculation
             new_title = content.get_title()
@@ -178,9 +185,9 @@ class Note(Base):
                 self.title = "Untitled Note"
             elif self.title != new_title:
                 self.title = new_title
+
+            if need_commit:
                 db_session.commit()
-            return new_title, content
-        return self.title, content
 
     @classmethod
     def deserialize(cls, serialized_dict):
@@ -192,12 +199,12 @@ class Note(Base):
 
     @classmethod
     def non_deleted(cls):
-        return cls.query.filter(Note.deleted == False)
+        return cls.query.filter(Note.type > 0)
 
+    @classmethod
+    def soft_deleted(cls):
+        return cls.query.filter(Note.type < 0).filter(Note.type != NC_TYPE_PERMA_DELETE)
 
-NC_TYPE_PERMA_DELETE = -2
-NC_TYPE_TRASHED = -10000000
-NC_TYPE_PLAIN = 10000000
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'
