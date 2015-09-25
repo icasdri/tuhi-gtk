@@ -205,6 +205,14 @@ class Note(Base):
     def soft_deleted(cls):
         return cls.query.filter(Note.type < 0).filter(Note.type != NC_TYPE_PERMA_DELETE)
 
+    def delete_permanently(self):
+        NoteContent.query_for_note(self).delete()
+        db_session.commit()
+        perma_delete_nc = NoteContent(note=self, data="", type=NC_TYPE_PERMA_DELETE)
+        db_session.add(perma_delete_nc)
+        db_session.commit()
+        return perma_delete_nc
+
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'
