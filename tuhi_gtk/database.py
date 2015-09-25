@@ -117,22 +117,6 @@ def get_current_date():
 def new_uuid():
     return str(uuid.uuid4())
 
-# x = 22
-#
-# def get_date_ignore_pushed(context):
-#     print(dir(context))
-#     print(context.result_column_struct)
-#     print(context.returning_cols)
-#     # print(context.result())
-#     print(context.current_parameters)
-#     global x
-#     x = context
-#     c = context.current_parameters
-#     if "pushed" in c and c["pushed"] in (True, False):
-#         pass
-#     else:
-#         return get_current_date()
-
 NC_TYPE_PLAIN = 10000000
 NC_TYPE_PERMA_DELETE = -2
 
@@ -174,7 +158,7 @@ class Note(Base):
                 self.date_content_modified = content.date_created
                 need_commit = True
 
-            # deleted flag recalculation
+            # type flag recalculation
             if self.type != content.type:
                 self.type = content.type
                 need_commit = True
