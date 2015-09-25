@@ -252,7 +252,7 @@ class SyncControl(GObject.Object):
 
                     if "note_id_errors" in note_res:
                         if note_res["note_id_errors"] == 90:  # Forbidden
-                            log.warn("Server returned Forbidden for unsynced Note: {}. Most likely a UUID conflict. Attempting resolution.", note_id)
+                            log.warn("Server returned Forbidden for unsynced Note: %s. Most likely a UUID conflict. Attempting resolution.", note_id)
                             old_id, new_id = note_store.rename_to_new_uuid(note)
                             log.debug("UUID local rename %s --> %s", old_id, new_id)
                             note_notonserver_tracker.register_rename(old_id, new_id)
@@ -272,7 +272,7 @@ class SyncControl(GObject.Object):
 
                     if "note_content_id_errors" in note_content_res:
                         if note_content_res["note_content_id_errors"] == 90:  # Forbidden
-                            log.warn("Server returned Forbidden for unsynced Note Content: {}. Most likely a UUID conflict. Attempting resolution.", note_content_id)
+                            log.warn("Server returned Forbidden for unsynced Note Content: %s. Most likely a UUID conflict. Attempting resolution.", note_content_id)
                             old_id, new_id = note_content_store.rename_to_new_uuid(note_content)
                             log.debug("UUID local rename %s --> %s", old_id, new_id)
                             note_content_notonserver_tracker.register_rename(old_id, new_id)
