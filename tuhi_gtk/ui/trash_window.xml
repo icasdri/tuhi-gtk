@@ -17,6 +17,13 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
+    <object class="GtkButton" id="confirm_delete_button">
+        <style>
+            <class name="destructive-action"/>
+        </style>
+        <property name="label">Confirm</property>
+        <signal name="clicked" handler="confirm_delete_button_clicked"/>
+    </object>
     <object class="GtkWindow" id="trash_window">
         <property name="modal">true</property>
         <property name="window-position">center-on-parent</property>
@@ -63,9 +70,18 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <property name="title">Deleted Notes</property>
                 <property name="show_close_button">True</property>
                 <child>
-                    <object class="GtkButton" id="delete_permanently_button">
-                        <property name="label">Delete Permanently</property>
-                        <signal name="clicked" handler="delete_permanently_button_clicked"/>
+                    <object class="GtkBox" id="deletion_controls_box">
+                        <property name="spacing">0</property>
+                        <style>
+                            <class name="raised"/>
+                            <class name="linked"/>
+                        </style>
+                        <child>
+                            <object class="GtkButton" id="delete_permanently_button">
+                                <property name="label">Delete Permanently</property>
+                                <signal name="clicked" handler="delete_permanently_button_clicked"/>
+                            </object>
+                        </child>
                     </object>
                     <packing>
                         <property name="pack-type">start</property>
@@ -73,6 +89,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 </child>
                 <child>
                     <object class="GtkButton" id="restore_button">
+                        <style>
+                            <class name="suggested-action"/>
+                        </style>
                         <property name="label">Restore</property>
                         <signal name="clicked" handler="restore_button_clicked"/>
                     </object>
