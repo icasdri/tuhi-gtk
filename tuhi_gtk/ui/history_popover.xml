@@ -65,7 +65,6 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 </child>
             </object>
         </child>
-        <signal name="closed" handler="history_popover_closed"/>
     </object>
     <object class="GtkScrolledWindow" id="scrolled_history_content">
         <property name="hscrollbar-policy">never</property>
