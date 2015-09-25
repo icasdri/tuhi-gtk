@@ -32,37 +32,6 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <property name="margin-start">7</property>
                 <property name="margin-end">7</property>
                 <property name="width-request">150</property>
-                <child>
-                    <object class="GtkBox" id="history_popover_top_controls">
-                        <property name="orientation">horizontal</property>
-                        <child>
-                            <object class="GtkButton" id="undo_button">
-                                <style>
-                                    <class name="menuitem"/>
-                                </style>
-                                <property name="height-request">30</property>
-                                <property name="width-request">30</property>
-                                <property name="image">icon_undo</property>
-                            </object>
-                        </child>
-                        <child>
-                            <object class="GtkButton" id="redo_button">
-                                <style>
-                                    <class name="menuitem"/>
-                                </style>
-                                <property name="height-request">30</property>
-                                <property name="width-request">30</property>
-                                <property name="image">icon_redo</property>
-                            </object>
-                        </child>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkSeparator">
-                        <property name="orientation">horizontal</property>
-                        <property name="height-request">5</property>
-                    </object>
-                </child>
             </object>
         </child>
     </object>
