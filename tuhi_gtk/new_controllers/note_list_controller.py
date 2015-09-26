@@ -77,6 +77,7 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
     def handle_note_metadata_change(self, note, reason):
         if note is not None:
             if note.type > 0:
+                self.add_item(note)  # if not already added (e.g. newly restored note)
                 self.refresh_item(note)
             else:  # note.type < 0 (including perma delete!)
                 self.remove_item(note)
