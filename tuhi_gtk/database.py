@@ -202,6 +202,12 @@ class Note(Base):
         db_session.commit()
         return perma_delete_nc
 
+    def restore_note(self):
+        soft_delete_nc = self.get_head_content()
+        restore_nc = NoteContent(note=self, data=soft_delete_nc.data, type=-soft_delete_nc.type)
+        db_session.add(restore_nc)
+        db_session.commit()
+        return restore_nc
 
 class NoteContent(Base):
     __tablename__ = 'note_contents'
