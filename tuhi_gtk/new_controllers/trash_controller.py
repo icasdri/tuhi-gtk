@@ -83,11 +83,11 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
             self.add_item(note)
 
     def restore_button_clicked(self, _):
-        # TODO: TESTING ONLY: this is NOT the actual restore logic. Just some testing code to show that get_item is working.
         _, it = self.get_object("treeview").get_selection().get_selected()
         if it is not None:
             note = self.get_item(it)
-            print(note.note_id, ": ", note.title)
+            restore_nc = note.restore_note()
+            self.global_r.emit("note_content_added", restore_nc, REASON_USER)
 
     def delete_permanently_button_clicked(self, _):
         _, it = self.get_object("treeview").get_selection().get_selected()
