@@ -104,10 +104,12 @@ class PreferencesController(SubwindowInterfaceController):
     def _ui_get(self, pref):
         ui_object_id, _, getter_name, _, wanted_type = RENDER_RELATIONSHIPS[pref]
         ui_object = self.get_object(ui_object_id)
+        ui_object.set_sensitive(False)
         if getter_name.startswith("props."):
             raw_val = getattr(ui_object.props, getter_name.split(".")[1])
         else:
             raw_val = getattr(ui_object, getter_name)()
+        ui_object.set_sensitive(True)
         return wanted_type(raw_val) if wanted_type is not None else raw_val
 
     def init_default_preferences_in_db(self):
