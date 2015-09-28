@@ -1,3 +1,21 @@
+<!--
+Copyright 2015 icasdri
+
+This file is part of tuhi-gtk.
+
+tuhi-gtk is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+tuhi-gtk is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
+-->
 <interface>
     <object class="GtkPopover" id="options_popover">
         <child>
@@ -9,7 +27,22 @@
                 <property name="margin-end">7</property>
                 <property name="width-request">150</property>
                 <child>
-                    <object class="GtkButton" id="preferences_option_button">
+                    <object class="GtkButton" id="trash_view_button">
+                        <style>
+                            <class name="menuitem"/>
+                        </style>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="margin-start">4</property>
+                                <property name="xalign">0</property>
+                                <property name="label">Deleted Notes</property>
+                            </object>
+                        </child>
+                        <signal name="clicked" handler="hide_popover"/>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="preferences_button">
                         <style>
                             <class name="menuitem"/>
                         </style>
@@ -20,11 +53,10 @@
                                 <property name="label">Preferences</property>
                             </object>
                         </child>
-                        <signal name="clicked" handler="preferences_option_button_clicked"/>
+                        <signal name="clicked" handler="hide_popover"/>
                     </object>
                 </child>
             </object>
         </child>
-        <signal name="closed" handler="options_popover_closed"/>
     </object>
 </interface>
