@@ -33,6 +33,7 @@ class MainWindowController(WindowController):
             "SourceViewController",
             "NoteListController",
             "HistoryController",
+            "NoteDetailsController",
             "OptionsPopoverController",
             "NewNoteController",
             "SyncButtonController",
