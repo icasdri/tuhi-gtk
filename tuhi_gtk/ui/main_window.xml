@@ -31,6 +31,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="GtkImage" id="icon_history_details">
         <property name="icon_name">document-open-recent-symbolic</property>
     </object>
+    <object class="GtkImage" id="icon_note_details">
+        <property name="icon_name">go-down-symbolic</property>
+    </object>
     <object class="GtkImage" id="icon_delete_note">
         <property name="icon_name">user-trash-symbolic</property>
     </object>

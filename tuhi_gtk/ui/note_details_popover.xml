@@ -1,0 +1,47 @@
+<!--
+Copyright 2015 icasdri
+
+This file is part of tuhi-gtk.
+
+tuhi-gtk is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+tuhi-gtk is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<interface>
+    <object class="GtkPopover" id="note_details_popover">
+        <child>
+            <object class="GtkBox" id="note_details_popover_box">
+                <property name="orientation">vertical</property>
+                <property name="margin-top">7</property>
+                <property name="margin-bottom">7</property>
+                <property name="margin-start">7</property>
+                <property name="margin-end">7</property>
+                <property name="width-request">150</property>
+                <child>
+                    <object class="GtkButton" id="delete_current_note_button">
+                        <style>
+                            <class name="menuitem"/>
+                        </style>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="margin-start">4</property>
+                                <property name="xalign">0</property>
+                                <property name="label">Delete Current Note</property>
+                            </object>
+                        </child>
+                        <signal name="clicked" handler="hide_popover"/>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
+</interface>
