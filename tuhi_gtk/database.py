@@ -194,6 +194,21 @@ class Note(Base):
     def soft_deleted(cls):
         return cls.query.filter(Note.type < 0).filter(Note.type != NC_TYPE_PERMA_DELETE)
 
+    def delete_to_trash(self):
+        head_content = self.get_head_content()
+        if head_content is not None:
+            hc_type = head_content.type
+            hc_data = head_content.data
+        else:
+            hc_type = NC_TYPE_PLAIN
+            hc_data = ""
+
+        if hc_type > 0:
+            deletion_nc = NoteContent(note=self, data=hc_data, type=-hc_type)
+            db_session.add(deletion_nc)
+            db_session.commit()
+            return deletion_nc
+
     def delete_permanently(self):
         NoteContent.query_for_note(self).delete()
         db_session.commit()
@@ -202,7 +217,7 @@ class Note(Base):
         db_session.commit()
         return perma_delete_nc
 
-    def restore_note(self):
+    def restore_from_trash(self):
         soft_delete_nc = self.get_head_content()
         restore_nc = NoteContent(note=self, data=soft_delete_nc.data, type=-soft_delete_nc.type)
         db_session.add(restore_nc)
