@@ -17,6 +17,9 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
+    <object class="GtkImage" id="icon_delete_note">
+        <property name="icon_name">user-trash-symbolic</property>
+    </object>
     <object class="GtkPopover" id="note_details_popover">
         <child>
             <object class="GtkBox" id="note_details_popover_box">
@@ -27,18 +30,43 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <property name="margin-end">7</property>
                 <property name="width-request">150</property>
                 <child>
-                    <object class="GtkButton" id="delete_current_note_button">
-                        <style>
-                            <class name="menuitem"/>
-                        </style>
+                    <object class="GtkBox" id="note_details_top_controls">
+                        <property name="orientation">horizontal</property>
                         <child>
-                            <object class="GtkLabel">
-                                <property name="margin-start">4</property>
-                                <property name="xalign">0</property>
-                                <property name="label">Delete Current Note</property>
+                            <object class="GtkButton" id="delete_current_note_button">
+                                <style>
+                                    <class name="menuitem"/>
+                                </style>
+                                <property name="height-request">25</property>
+                                <property name="width-request">25</property>
+                                <property name="image">icon_delete_note</property>
                             </object>
+                            <packing>
+                                <property name="pack-type">end</property>
+                            </packing>
                         </child>
-                        <signal name="clicked" handler="hide_popover"/>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label">Date Created: </property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel" id="date_created_label">
+                        <property name="halign">end</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel">
+                        <property name="halign">start</property>
+                        <property name="label">Last Modified: </property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkLabel" id="date_modified_label">
+                        <property name="halign">end</property>
                     </object>
                 </child>
             </object>
