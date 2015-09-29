@@ -67,6 +67,7 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
         self.do_view_activate()
 
     def do_view_activate(self):
+        self.redetermine_button_sensitivity()
         self.get_object("trash_window").show_all()
         self.get_object("trash_window").present()
 
@@ -86,8 +87,9 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
         _, it = self.get_object("treeview").get_selection().get_selected()
         if it is not None:
             note = self.get_item(it)
-            restore_nc = note.restore_note()
+            restore_nc = note.restore_from_trash()
             self.global_r.emit("note_content_added", restore_nc, REASON_USER)
+            self.redetermine_button_sensitivity()
 
     def delete_permanently_button_clicked(self, _):
         _, it = self.get_object("treeview").get_selection().get_selected()
@@ -113,6 +115,7 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
             perma_delete_nc = note.delete_permanently()
             self.global_r.emit("note_content_added", perma_delete_nc, REASON_USER)
             self.note_to_be_deleted = None
+            self.redetermine_button_sensitivity()
 
     def handle_treeview_selection_changed(self, tree_selection):
         # Get rid of the deletion confirmation if it is present and we are now on a different note.
@@ -124,3 +127,11 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
                     self.note_to_be_deleted = None
             else:
                 self.note_to_be_deleted = None
+
+    def redetermine_button_sensitivity(self):
+        if len(self.liststore) > 0:
+            self.get_object("delete_permanently_button").set_sensitive(True)
+            self.get_object("restore_button").set_sensitive(True)
+        else:
+            self.get_object("delete_permanently_button").set_sensitive(False)
+            self.get_object("restore_button").set_sensitive(False)
