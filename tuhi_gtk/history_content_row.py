@@ -35,7 +35,12 @@ class HistoryContentRow(Gtk.ListBoxRow):
         return history_content_row
 
     def refresh(self):
-        self.label.set_text(format_date(self.note_content.date_created))
+        if self.note_content.type > 0:
+            text = format_date(self.note_content.date_created)
+        else:
+            text = "Deleted & Restored"
+        self.label.set_text(text)
+
 
 
 def get_history_content_list():
