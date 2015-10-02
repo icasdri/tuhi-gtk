@@ -18,7 +18,7 @@
 from gi.repository import GObject, Gtk, GtkSource
 from tuhi_gtk.config import BUFFER_ACTIVITY_CHECKERS_RESOLUTION, REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.util import property_change_function, ignore_all_args_function
+from tuhi_gtk.util import property_change_function, ignore_all_args_function, format_date
 from tuhi_gtk.database import db_session, NoteContent, kv_store, NC_TYPE_PLAIN
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 
@@ -81,7 +81,12 @@ class SourceViewController(SubwindowInterfaceController):
         self.current_buffer = GtkSource.Buffer()
         if content is not None:
             self.current_buffer.begin_not_undoable_action()
-            self.current_buffer.set_text(content.data)
+            if content.type > 0:
+                self.source_view.set_sensitive(True)
+                self.current_buffer.set_text(content.data)
+            else:
+                self.source_view.set_sensitive(False)
+                self.current_buffer.set_text("This note was deleted on {}, and later restored.".format(format_date(content.date_created)))
             self.current_buffer.end_not_undoable_action()
 
         self.source_view.set_buffer(self.current_buffer)
@@ -127,6 +132,8 @@ class SourceViewController(SubwindowInterfaceController):
             return
 
         old_content = self.current_note_content
+        if old_content is not None and old_content.type < 0:
+            return
 
         old_data = old_content.data if old_content is not None else ""
         new_data = self.current_buffer.props.text if self.current_buffer is not None else ""
