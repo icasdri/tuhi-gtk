@@ -99,8 +99,8 @@ class SyncControl(GObject.Object):
             self.sync_lock.release()
             return
         else:
-            yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added", "Note", "note_id")
-            yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added", "NoteContent", "note_content_id")
+            yield from self._merge_change(data["notes"], note_store, note_notonserver_tracker, "note_added", "Note", "note_id")  # py3 # noqa
+            yield from self._merge_change(data["note_contents"], note_content_store, note_content_notonserver_tracker, "note_content_added", "NoteContent", "note_content_id")  # py3 # noqa
             kv_store["LAST_PULL_DATE"] = get_current_date()
 
             pre_push_comm_gen = self._pre_push_comm()

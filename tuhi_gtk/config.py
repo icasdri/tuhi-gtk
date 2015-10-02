@@ -23,7 +23,7 @@ USERCONFIG_DIR = os.path.expanduser("~/.config/tuhi-gtk")
 
 def config_directories():
     for directory in (USERDATA_DIR, USERCONFIG_DIR):
-        os.makedirs(directory, mode=0o751, exist_ok=True)
+        os.makedirs(directory, mode=0o751, exist_ok=True)  # py3 # noqa
 
 DATABASE_PATH = os.path.join(USERDATA_DIR, "tuhi_gtk_notes.db")
 DATABASE_URI = "sqlite:///" + DATABASE_PATH

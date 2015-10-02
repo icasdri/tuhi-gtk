@@ -1,0 +1,3 @@
+pylint:
+    disable:
+      - super-on-old-class  # there are no old-style classes in python 3
