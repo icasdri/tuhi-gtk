@@ -27,8 +27,6 @@ from tuhi_gtk.history_content_row import HistoryContentRow
 log = get_log_for_prefix_tuple(("co", "hist_c_l"))
 
 class HistoryContentListController(SubwindowInterfaceController, ListControllerMixin):
-    default_query = None
-
     def do_init(self):
         self.window.register_controller("history_content_list", self)
         self.window.connect("notify::current-note", property_change_function(self.current_note_changed))
@@ -63,8 +61,8 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
         if self.current_note is None:  # if it's is still None
             log.error("History content popover should not be able to be activated for no Note (current_note is None).")
         else:
-            self.default_query = NoteContent.query_for_note(self.current_note)
-            ListControllerMixin.__init__(self)
+            default_query = NoteContent.query_for_note(self.current_note)
+            ListControllerMixin.__init__(self, self.list, self._create_row, lambda x: x.note_content_id, default_query)
             self.signal_listener_id = self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
             self.initial_populate()
             self.selection_signal_listener_id = self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
@@ -84,10 +82,6 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
     def do_shutdown(self):
         if self.list is not None:
             self.list.destroy()
-
-    @staticmethod
-    def _item_id(note_content):
-        return note_content.note_content_id if note_content is not None else None
 
     def _create_row(self, note_content):
         hc_row = HistoryContentRow.get_history_content_row(note_content)
