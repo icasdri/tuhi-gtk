@@ -29,7 +29,6 @@ class MainWindowCosmeticsController(SubwindowInterfaceController):
 
     def do_first_view_activate(self):
         log.debug("Falling back icons that are note available")
-        self.fallback_icons()
         log.debug("Keeping sizes in sync")
         self.side_hb = self.window.get_object("side_hb")
         self._hb_synced_width = 0
@@ -42,10 +41,4 @@ class MainWindowCosmeticsController(SubwindowInterfaceController):
             # TODO: TESTING ONLY: Debug size allocation print statements
             log.debug("Width allocation: Listbox <-> HeaderBar: %d %d",
                       allocation.width, self.side_hb.get_allocation().width)
-
-    def fallback_icons(self):
-        for icon_id in ("icon_new_note",):
-            icon = self.window.get_object(icon_id)
-            if not Gtk.IconTheme.get_default().has_icon(icon.props.icon_name):
-                icon.props.icon_name = self.window.get_object(icon_id + "_fallback").props.icon_name
 
