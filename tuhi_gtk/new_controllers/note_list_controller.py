@@ -27,8 +27,6 @@ from tuhi_gtk.new_controllers.list_controller_mixin import ListControllerMixin
 log = get_log_for_prefix_tuple(("co", "note_l"))
 
 class NoteListController(SubwindowInterfaceController, ListControllerMixin):
-    default_query = Note.non_deleted()
-
     def do_init(self):
         self.window.register_controller("note_list", self)
         self.window.connect("view-activated", ignore_all_args_function(self.view_activate))
@@ -36,14 +34,18 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
     def do_first_view_activate(self):
         self.list = self.window.get_object("list")
         self.list.set_sort_func(sort_func)
-        ListControllerMixin.__init__(self)
+        ListControllerMixin.__init__(self, self.list, self._create_row, lambda x: x.note_id, Note.non_deleted())
         self.global_r.connect("note-added", ignore_sender_function(self.handle_new_note))
-        self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
+        #self.global_r.connect("note-content-added", ignore_sender_function(self.handle_new_note_content))
         self.initial_populate()
         for note in note_notonserver_tracker.get_all():
-            self._get_row(note).show_feature("unsynced_emblem")
+            row = self.get_row(note)
+            if row is not None:
+                row.show_feature("unsynced_emblem")
         for note_content in note_content_notonserver_tracker.get_all():
-            self._get_row(note_content.note).show_feature("unsynced_emblem")
+            row = self.get_row(note_content.note)
+            if row is not None:
+                row.show_feature("unsynced_emblem")
         self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
         self.window.connect("notify::current-note", property_change_function(self.handle_window_current_note_change))
         self.global_r.connect("note-metadata-changed", ignore_sender_function(self.handle_note_metadata_change))
@@ -57,8 +59,8 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
         self.select_item(last_note_selected)
 
     def handle_sync_action_for_note(self, note, sync_action):
-        log.debug("Recieved Note Sync Action: %s: %s", note.note_id, sync_action)
-        row = self._ro_get_row(note)
+        log.debug("Recieved Note Sync Action: %s", note.note_id)
+        row = self.get_row(note)
         if row is not None:
             if sync_action == SYNC_ACTION_BEGIN:
                 row.show_feature("spinner")
@@ -71,31 +73,25 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
     def handle_window_current_note_change(self, note):
         if self.list.get_selected_row() != note:
             self.select_item(note)
-        if note is not None:
-            self._get_row(note).hide_feature("synced_in_emblem")
+        row = self.get_row(note)
+        if row is not None:
+            row.hide_feature("synced_in_emblem")
 
     def handle_note_metadata_change(self, note, reason):
         if note is not None:
             if note.type > 0:
                 self.add_item(note)  # if not already added (e.g. newly restored note)
-                self.refresh_item(note)
+                row = self.get_row(note)
+                if reason == REASON_SYNC:
+                    row.show_feature("synced_in_emblem")
+                else:
+                    row.show_feature("unsynced_emblem")
+                row.refresh()
             else:  # note.type < 0 (including perma delete!)
                 self.remove_item(note)
 
     def handle_new_note(self, note, reason):
-        self.add_item(note)
-        if note is not None and note.type > 0:
-            if reason == REASON_SYNC:
-                self._get_row(note).show_feature("synced_in_emblem")
-            else:
-                self._get_row(note).show_feature("unsynced_emblem")
-
-    def handle_new_note_content(self, note_content, reason):
-        if note_content is not None:
-            if reason == REASON_SYNC:
-                self._get_row(note_content.note).show_feature("synced_in_emblem")
-            else:
-                self._get_row(note_content.note).show_feature("unsynced_emblem")
+        self.handle_note_metadata_change(note, reason)
 
     def row_selected_callback(self, row):
         if row is None:
@@ -116,10 +112,6 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
                          selected_note_row.note.note_id, selected_note_row.note.title)
             kv_store["LAST_NOTE_SELECTED"] = selected_note_row.note.note_id
 
-    @staticmethod
-    def _item_id(note):
-        return note.note_id if note is not None else None
-
     def _create_row(self, note):
         noterow = NoteRow.get_note_row(note)
         noterow.show_all()
@@ -136,11 +128,6 @@ class NoteListController(SubwindowInterfaceController, ListControllerMixin):
                                             .order_by(Note.date_content_modified.desc()) \
                                             .first()
         self.select_item(target_note)
-
-    def mark_note(self, note, mark):
-        noterow = self._get_row(note)
-        noterow.mark(mark)
-
 
 def sort_func(a, b):
     return b.note.date_content_modified - a.note.date_content_modified
