@@ -21,7 +21,7 @@ from tuhi_gtk.config import get_ui_file, REASON_USER
 from tuhi_gtk.database import NoteContent, db_session, NC_TYPE_PLAIN
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.new_controllers.popover_controller_mixin import PopoverControllerMixin
-from tuhi_gtk.util import ignore_all_args_function, property_change_function
+from tuhi_gtk.util import ignore_all_args_function, property_change_function, format_date
 
 log = get_log_for_prefix_tuple(("co", "note_details"))
 
@@ -43,6 +43,9 @@ class NoteDetailsController(SubwindowInterfaceController, PopoverControllerMixin
 
     def do_view_activate(self):
         self.window.get_controller("source_view").save_current_note()
+        current_note = self.window.current_note
+        self.get_object("date_created_label").set_text(format_date(current_note.date_created))
+        self.get_object("date_modified_label").set_text(format_date(current_note.date_content_modified))
         self.show_popover()
 
     def current_note_changed(self, note):
@@ -51,16 +54,5 @@ class NoteDetailsController(SubwindowInterfaceController, PopoverControllerMixin
     def delete_current_note(self):
         current_note = self.window.current_note
         if current_note is not None:
-            head_content = current_note.get_head_content()
-            if head_content is not None:
-                hc_type = head_content.type
-                hc_data = head_content.data
-            else:
-                hc_type = NC_TYPE_PLAIN
-                hc_data = ""
-
-            if hc_type > 0:
-                deletion = NoteContent(note=current_note, data=hc_data, type=-hc_type)
-                db_session.add(deletion)
-                db_session.commit()
-                self.global_r.emit("note_content_added", deletion, REASON_USER)
+            deletion_nc = current_note.delete_to_trash()
+            self.global_r.emit("note_content_added", deletion_nc, REASON_USER)

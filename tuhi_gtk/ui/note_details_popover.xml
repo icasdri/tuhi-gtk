@@ -33,6 +33,14 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                     <object class="GtkBox" id="note_details_top_controls">
                         <property name="orientation">horizontal</property>
                         <child>
+                            <object class="GtkLabel" id="sync_status_label">
+                                <!-- Not implemented as of yet -->
+                            </object>
+                            <packing>
+                                <property name="pack-type">start</property>
+                            </packing>
+                        </child>
+                        <child>
                             <object class="GtkButton" id="delete_current_note_button">
                                 <style>
                                     <class name="menuitem"/>
@@ -48,25 +56,39 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                     </object>
                 </child>
                 <child>
-                    <object class="GtkLabel">
-                        <property name="halign">start</property>
-                        <property name="label">Date Created: </property>
+                    <object class="GtkBox">
+                        <property name="orientation">horizontal</property>
+                        <child>
+                            <object class="GtkImage" id="icon_date_created">
+                                <property name="icon_name">document-new-symbolic</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkLabel" id="date_created_label">
+                                <property name="halign">end</property>
+                            </object>
+                            <packing>
+                                <property name="padding">6</property>
+                            </packing>
+                        </child>
                     </object>
                 </child>
                 <child>
-                    <object class="GtkLabel" id="date_created_label">
-                        <property name="halign">end</property>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkLabel">
-                        <property name="halign">start</property>
-                        <property name="label">Last Modified: </property>
-                    </object>
-                </child>
-                <child>
-                    <object class="GtkLabel" id="date_modified_label">
-                        <property name="halign">end</property>
+                    <object class="GtkBox">
+                        <property name="orientation">horizontal</property>
+                        <child>
+                            <object class="GtkImage" id="icon_date_modified">
+                                <property name="icon_name">document-open-recent-symbolic</property>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkLabel" id="date_modified_label">
+                                <property name="halign">end</property>
+                            </object>
+                            <packing>
+                                <property name="padding">6</property>
+                            </packing>
+                        </child>
                     </object>
                 </child>
             </object>
