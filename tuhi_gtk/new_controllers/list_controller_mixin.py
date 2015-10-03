@@ -16,55 +16,38 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 class ListControllerMixin(object):
-    default_query = None
-
-    def __init__(self):
-        self.lookup = {}
+    def __init__(self, listbox, row_creation_func, item_id_func, default_query):
+        self.__lookup = {}
+        self.__listbox = listbox
+        self.__create_row = row_creation_func
+        self.__item_id = lambda x: item_id_func(x) if x is not None else None
+        self.__default_query = default_query
 
     def initial_populate(self):
-        for item in self.default_query.all():
+        for item in self.__default_query.all():
             self.add_item(item)
 
-    @staticmethod
-    def _item_id(item):
-        return item.id
-
-    def _create_row(self, item):
-        return None
-
-    def _ro_get_row(self, item):
-        item_id = self._item_id(item)
-        if item_id in self.lookup:
-            return self.lookup[item_id]
-        return None
-
-    def _get_row(self, item):
-        item_id = self._item_id(item)
-        if item_id is None:
-            return None
-        if item_id in self.lookup:
-            row = self.lookup[item_id]
-        else:
-            row = self._create_row(item)
-            self.lookup[item_id] = row
-        return row
+    def get_row(self, item):
+        return self.__lookup.get(self.__item_id(item), None)
 
     def add_item(self, item):
-        row = self._get_row(item)
-        if row not in self.list:
-            self.list.add(row)
+        item_id = self.__item_id(item)
+        if item_id is not None and item_id not in self.__lookup:
+            row = self.__create_row(item)
+            self.__lookup[item_id] = row
+            self.__listbox.add(row)
 
     def remove_item(self, item):
-        row = self._get_row(item)
-        # self.list.remove(item)
-        row.destroy()
-        del self.lookup[self._item_id(item)]
-
-    def refresh_item(self, item):
-        row = self._get_row(item)
-        row.refresh()
+        row = self.get_row(item)
+        if row is not None:
+            row.destroy()
+            del self.__lookup[self.__item_id(item)]
 
     def select_item(self, item):
-        row = self._get_row(item)
-        self.list.select_row(row)
+        if item is None:
+            self.__listbox.select_row(None)
+        else:
+            row = self.get_row(item)
+            if row is not None:
+                self.__listbox.select_row(row)
 
