@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import GObject, Gtk, GtkSource
+from gi.repository import GObject, GtkSource
 from tuhi_gtk.config import BUFFER_ACTIVITY_CHECKERS_RESOLUTION, REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import property_change_function, ignore_all_args_function, format_date
@@ -92,7 +92,7 @@ class SourceViewController(SubwindowInterfaceController):
         self.source_view.set_buffer(self.current_buffer)
         self.current_buffer.connect("changed", self.buffer_changed)
 
-    def buffer_changed(self, buffer):
+    def buffer_changed(self, _):
         self.inactivity_count = 1
         if self.activity_count < 1:
             self.activity_count = 1

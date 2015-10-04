@@ -71,13 +71,13 @@ class TrashController(SubwindowInterfaceController, TreeListStoreControllerMixin
         self.get_object("trash_window").show_all()
         self.get_object("trash_window").present()
 
-    def trash_window_closed(self, window, event):
+    def trash_window_closed(self, window, _):
         # TODO: Should we reconstruct this window every time?
         self.note_to_be_deleted = None
         window.hide()
         return True  # Stop event from propagating
 
-    def handle_note_metadata_changed(self, note, reason):
+    def handle_note_metadata_changed(self, note, _):
         if note.type == NC_TYPE_PERMA_DELETE or note.type > 0:
             self.remove_item(note)
         else:

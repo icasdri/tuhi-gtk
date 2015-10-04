@@ -18,9 +18,9 @@
 import os.path
 import uuid
 import time
-from sqlalchemy import create_engine, Column, CHAR, String, Text, Boolean, Integer, ForeignKey
+from sqlalchemy import create_engine, Column, CHAR, String, Text, Integer, ForeignKey
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound, FlushError
+from sqlalchemy.orm.exc import NoResultFound, FlushError
 from sqlalchemy.ext.declarative import declarative_base
 from tuhi_gtk.config import DATABASE_URI, DATABASE_PATH
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
@@ -293,12 +293,12 @@ class Store(object):
 
     def get(self, id_or_serialized):
         if isinstance(id_or_serialized, dict):
-            id = id_or_serialized[self.pk_name]
+            id_ = id_or_serialized[self.pk_name]
         else:
-            id = id_or_serialized
+            id_ = id_or_serialized
 
         try:
-            return self.model.query.filter(getattr(self.model, self.pk_name) == id).one()
+            return self.model.query.filter(getattr(self.model, self.pk_name) == id_).one()
         except NoResultFound:
             return None
 

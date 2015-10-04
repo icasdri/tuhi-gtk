@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
-from tuhi_gtk.database import Note
 
 
 class TreeListStoreControllerMixin(object):

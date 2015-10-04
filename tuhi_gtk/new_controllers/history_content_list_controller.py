@@ -70,7 +70,7 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
     def do_view_activate(self):
         self.select_item(self.window.current_note_content)
 
-    def handle_new_note_content(self, note_content, reason):
+    def handle_new_note_content(self, note_content, _):
         if self.list is not None:
             #if note_content is not None and note_content.note
             self.add_item(note_content)

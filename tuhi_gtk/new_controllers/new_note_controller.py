@@ -18,7 +18,7 @@
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import REASON_USER
 from tuhi_gtk.util import ignore_all_args_function
-from tuhi_gtk.database import kv_store, Note, db_session
+from tuhi_gtk.database import Note, db_session
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 
 log = get_log_for_prefix_tuple(("co", "new_note"))

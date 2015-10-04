@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gtk, Pango
+from gi.repository import Gtk
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.config import get_ui_file
@@ -73,12 +73,12 @@ class PreferencesController(SubwindowInterfaceController):
         self.populate_preferences_from_db()
         self.get_object("preferences_window").present()
 
-    def preferences_window_closed(self, window, event):
+    def preferences_window_closed(self, window, _):
         self.save_preferences_to_db()
         window.hide()
         return True  # Stop event from propagating
 
-    def editor_use_custom_font_switch_toggled(self, widget, property_object, first_call=False):
+    def editor_use_custom_font_switch_toggled(self, _, _, first_call=False):
         use_custom_font_switch = self.get_object("editor_use_custom_font_switch")
         box = self.get_object("editor_font_selection_box")
         placeholder = self.get_object("editor_font_selection_placeholder")

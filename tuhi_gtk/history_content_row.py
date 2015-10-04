@@ -14,7 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
-from datetime import datetime
+
 from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.util import format_date

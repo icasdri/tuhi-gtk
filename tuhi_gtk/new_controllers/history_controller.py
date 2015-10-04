@@ -15,9 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
-from gi.repository import Gtk
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.util import ignore_all_args_function, property_change_function
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.new_controllers.popover_controller_mixin import PopoverControllerMixin

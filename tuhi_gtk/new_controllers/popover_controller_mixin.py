@@ -17,7 +17,6 @@
 
 from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
-from tuhi_gtk.util import ignore_all_args_function
 
 
 class PopoverControllerMixin(object):
