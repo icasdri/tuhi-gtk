@@ -17,7 +17,8 @@
 
 from gi.repository import GObject
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.config import SYNC_ACTION_BEGIN, SYNC_ACTION_SUCCESS, SYNC_ACTION_FAILURE, EMBLEM_SHOW_TIMEOUT
+from tuhi_gtk.config import SYNC_ACTION_BEGIN, SYNC_ACTION_SUCCESS, SYNC_ACTION_FAILURE, EMBLEM_SHOW_TIMEOUT, \
+    SYNC_BY_USER
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.feature_view_mixin import FeatureViewMixin
@@ -46,9 +47,9 @@ class SyncButtonController(SubwindowInterfaceController, FeatureViewMixin):
 
     def do_view_activate(self):
         log.debug("Sync logic activated")
-        self.global_r.sync_control.sync()
+        self.global_r.sync_control.sync(SYNC_BY_USER)
 
-    def handle_global_sync_action(self, action):
+    def handle_global_sync_action(self, action, _):
         if action == SYNC_ACTION_BEGIN:
             self.show_feature("spinner")
             self.sync_button.set_sensitive(False)

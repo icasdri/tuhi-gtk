@@ -55,6 +55,9 @@ SYNC_FAILURE_AUTHENTICATION = "authentication"
 SYNC_FAILURE_FINGERPRINT = "fingerprint"
 SYNC_FAILURE_SSLHANDSHAKE = "sslhandshake"
 
+SYNC_BY_USER = "by_user"
+SYNC_BY_AUTO = "by_auto"
+
 def get_ui_file(ui_name):
     return resource_filename(__name__, os.path.join(UI_BASEDIR, ui_name + UI_EXTENSION))
 

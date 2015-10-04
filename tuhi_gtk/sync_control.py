@@ -31,12 +31,14 @@ log = get_log_for_prefix_tuple(("sync",))
 
 class SyncControl(GObject.Object):
     __gsignals__ = {
-        "global_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING,)),
+        "global_sync_action": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, GObject.TYPE_STRING,)),
         # Action names: begin, success, failure
+        # Sync by: user, auto
         "sync_action_for_note": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_PYOBJECT, GObject.TYPE_STRING)),
         # Action names: begin, success, failure
-        "sync_failure": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, GObject.TYPE_PYOBJECT)),
+        "sync_failure": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, (GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_PYOBJECT)),
         # Failure types: fatal, connection, authentication, fingerprint, sslhandshake
+        # Sync by: user, auto
         # "Extra information" field containing any pyobject
     }
 
@@ -45,13 +47,14 @@ class SyncControl(GObject.Object):
         self.global_r.instance_register(self)
         self.sync_lock = threading.Lock()
 
-    def sync(self):
+    def sync(self, by_who):
         lock_acquired = self.sync_lock.acquire(blocking=False)
         if not lock_acquired:
             log.info("Failed to acquire lock for sync.")
             return False
         log.debug("Sync started.")
-        self.emit("global_sync_action", SYNC_ACTION_BEGIN)
+        self.by_who = by_who
+        self.emit("global_sync_action", SYNC_ACTION_BEGIN, self.by_who)
         log.debug("Retrieving server connection preferences.")
         self.sync_url = kv_store["SYNCSERVER_URL"].rstrip("/") + SYNCSERVER_NOTES_ENDPOINT
         self.auth = (kv_store["SYNCSERVER_USERNAME"], kv_store["SYNCSERVER_PASSWORD"])
@@ -84,8 +87,8 @@ class SyncControl(GObject.Object):
             GObject.idle_add(lambda x: next(post_pull_comm_gen, False), GObject.PRIORITY_LOW)
 
     def _handle_pull_connection_error(self, e):
-        self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-        self.emit("sync_failure", SYNC_FAILURE_CONNECTION, (e, self.sync_url))
+        self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+        self.emit("sync_failure", SYNC_FAILURE_CONNECTION, self.by_who, (e, self.sync_url))
         self.sync_lock.release()
         return False
 
@@ -94,8 +97,8 @@ class SyncControl(GObject.Object):
             data = r.json()
         except ValueError:
             log.critical("Server responded with malformed or missing JSON data on pull.")
-            self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-            self.emit("sync_failure", SYNC_FAILURE_FATAL, "Server responded with missing or malformed JSON data on pull.")
+            self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+            self.emit("sync_failure", SYNC_FAILURE_FATAL, self.by_who, "Server responded with missing or malformed JSON data on pull.")
             self.sync_lock.release()
             return
         else:
@@ -167,7 +170,7 @@ class SyncControl(GObject.Object):
             push_thread.start()
         else:
             log.info("No unsynced changes to push. Skipping push.")
-            self.emit("global_sync_action", SYNC_ACTION_SUCCESS)
+            self.emit("global_sync_action", SYNC_ACTION_SUCCESS, self.by_who)
             self.sync_lock.release()
 
     def _push_comm(self, data, raw_tracker_dicts):  # Runs in separate thread
@@ -189,8 +192,8 @@ class SyncControl(GObject.Object):
         _, _, affected_notes_dict = raw_tracker_dicts
         for note in affected_notes_dict.values():
             self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
-        self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-        self.emit("sync_failure", SYNC_FAILURE_CONNECTION, (e, self.sync_url))
+        self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+        self.emit("sync_failure", SYNC_FAILURE_CONNECTION, self.by_who, (e, self.sync_url))
         self.sync_lock.release()
         return False
 
@@ -202,8 +205,8 @@ class SyncControl(GObject.Object):
             log.critical("Server responded with HTTP %s", r.status_code)
             for note in affected_notes_dict.values():
                 self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
-            self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-            self.emit("sync_failure", SYNC_FAILURE_FATAL, "Server responded with HTTP {}".format(r.status_code))
+            self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+            self.emit("sync_failure", SYNC_FAILURE_FATAL, self.by_who, "Server responded with HTTP {}".format(r.status_code))
             self.sync_lock.release()
             return
 
@@ -211,8 +214,8 @@ class SyncControl(GObject.Object):
             log.error("Server rejected push due to an authentication issue. Server responded with HTTP 401.")
             for note in affected_notes_dict.values():
                 self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
-            self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-            self.emit("sync_failure", SYNC_FAILURE_AUTHENTICATION, None)
+            self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+            self.emit("sync_failure", SYNC_FAILURE_AUTHENTICATION, self.by_who, None)
             self.sync_lock.release()
             return
 
@@ -220,7 +223,7 @@ class SyncControl(GObject.Object):
             log.info("Server accepted push for all unsynced Notes and Note Contents")
             for note in affected_notes_dict.values():
                 self.emit("sync_action_for_note", note, SYNC_ACTION_SUCCESS)
-            self.emit("global_sync_action", SYNC_ACTION_SUCCESS)
+            self.emit("global_sync_action", SYNC_ACTION_SUCCESS, self.by_who)
             note_notonserver_tracker.discard_successes(notes_tracking_dict.keys())
             note_content_notonserver_tracker.discard_successes(note_contents_tracking_dict.keys())
             self.sync_lock.release()
@@ -235,8 +238,8 @@ class SyncControl(GObject.Object):
                 log.critical("Server responded with malformed or missing JSON data on push.")
                 for note in affected_notes_dict.values():
                     self.emit("sync_action_for_note", note, SYNC_ACTION_FAILURE)
-                self.emit("global_sync_action", SYNC_ACTION_FAILURE)
-                self.emit("sync_failure", SYNC_FAILURE_FATAL, "Server responded with missing or malformed JSON data on push.")
+                self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+                self.emit("sync_failure", SYNC_FAILURE_FATAL, self.by_who, "Server responded with missing or malformed JSON data on push.")
                 self.sync_lock.release()
                 return
             else:
@@ -286,10 +289,10 @@ class SyncControl(GObject.Object):
                     self.emit("sync_action_for_note", note, SYNC_ACTION_SUCCESS)
                 note_notonserver_tracker.discard_successes(notes_tracking_dict.keys())
                 note_content_notonserver_tracker.discard_successes(note_contents_tracking_dict.keys())
-                self.emit("global_sync_action", SYNC_ACTION_FAILURE)
+                self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
                 if unknown_error_count > 0:
-                    self.emit("sync_failure",
-                              SYNC_FAILURE_FATAL, "{} unknown error codes or formatting issues were encountered when processing"
-                                                  " server's response to an attempt to push unsynced notes.".format(unknown_error_count))
+                    self.emit("sync_failure", SYNC_FAILURE_FATAL, self.by_who,
+                              "{} unknown error codes or formatting issues were encountered when processing"
+                              " server's response to an attempt to push unsynced notes.".format(unknown_error_count))
                 self.sync_lock.release()
 
