@@ -78,7 +78,7 @@ class PreferencesController(SubwindowInterfaceController):
         window.hide()
         return True  # Stop event from propagating
 
-    def editor_use_custom_font_switch_toggled(self, _, _, first_call=False):
+    def editor_use_custom_font_switch_toggled(self, *_, first_call=False):
         use_custom_font_switch = self.get_object("editor_use_custom_font_switch")
         box = self.get_object("editor_font_selection_box")
         placeholder = self.get_object("editor_font_selection_placeholder")
