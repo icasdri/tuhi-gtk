@@ -30,6 +30,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                     <object class="GtkButton" id="trash_view_button">
                         <style>
                             <class name="menuitem"/>
+                            <class name="flat"/>
                         </style>
                         <child>
                             <object class="GtkLabel">
@@ -45,6 +46,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                     <object class="GtkButton" id="preferences_button">
                         <style>
                             <class name="menuitem"/>
+                            <class name="flat"/>
                         </style>
                         <child>
                             <object class="GtkLabel">
