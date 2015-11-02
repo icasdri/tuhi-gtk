@@ -1,0 +1,46 @@
+<!--
+Copyright 2015 icasdri
+
+This file is part of tuhi-gtk.
+
+tuhi-gtk is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+tuhi-gtk is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<interface>
+    <object class="GtkInfoBar" id="error_bar">
+        <property name="message-type">error</property>
+        <property name="show-close-button">false</property>
+        <style>
+            <class name="flat"/>
+        </style>
+        <child internal-child="content_area">
+            <object class="GtkBox">
+                <child>
+                    <object class="GtkLabel" id="error_bar_text">
+                        <property name="label">Error Bar</property>
+                        <property name="visible">true</property>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <child internal-child="action_area">
+            <object class="GtkBox">
+                <child>
+                    <object class="GtkButton" id="error_bar_action">
+                        <property name="label">Action...</property>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
+</interface>
