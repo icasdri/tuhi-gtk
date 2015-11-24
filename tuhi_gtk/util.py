@@ -39,6 +39,11 @@ def property_change_function(func):
     return new_func
 
 
+def hide_window_on_delete(widget, _):
+    widget.hide()
+    return True
+
+
 def underscore_camelcase(camel_str):
     last_index = 0
     result = ""

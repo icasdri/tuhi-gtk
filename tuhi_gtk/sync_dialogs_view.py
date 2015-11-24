@@ -18,9 +18,9 @@
 from gi.repository import Gtk
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
+from tuhi_gtk.util import hide_window_on_delete
 
 log = get_log_for_prefix_tuple(("ui", "sync_dialogs"))
-
 
 class SyncDialog(Gtk.MessageDialog):
     ui_builder_file_name = None  # need to be set by subclasses
@@ -39,6 +39,7 @@ class SyncDialog(Gtk.MessageDialog):
         if cls.builder is None:
             cls.builder = Gtk.Builder.new_from_file(get_ui_file("sync_dialogs/" + cls.ui_builder_file_name))
             cls.instance = cls.builder.get_object(cls.built_root_name)
+            cls.instance.connect("delete-event", hide_window_on_delete)
         if transient_for is not None:
             cls.instance.set_transient_for(transient_for)
         cls.instance.initialize(controller)
