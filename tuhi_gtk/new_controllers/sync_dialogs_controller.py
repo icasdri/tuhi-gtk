@@ -22,51 +22,15 @@ from tuhi_gtk.config import get_ui_file, SYNC_FAILURE_FATAL, SYNC_FAILURE_CONNEC
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function
 from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.sync_dialogs_view import AuthenticationSyncDialog, ConnectionSyncDialog, FatalSyncDialog, FingerprintSyncDialog
 
 log = get_log_for_prefix_tuple(("co", "sync_dialogs"))
 
-
-class DialogMaster(object):
-    parent = None
-    builder = None
-    state = None
-
-    def show_dialog(self, parent, state):
-        self.parent = parent
-        self.builder = self.parent.get_dialogs_builder()
-        self.state = state
-        self.do_show_dialog()
-
-    def do_show_dialog(self):
-        pass
-
-    def _get_dialog_object(self, object_id):
-        dialog = self.builder.get_object(object_id)
-        dialog.set_transient_for(self.parent.window.get_object("main_window"))
-        return dialog
-
-
-class MessageDialogMaster(DialogMaster):
-    def do_show_dialog(self):
-        dialog = self._get_dialog_object("message_dialog")
-        dialog.show_all()
-
-
-class AuthenticationDialogMaster(DialogMaster):
-    def do_show_dialog(self):
-        pass
-
-
-class FingerprintDialogMaster(DialogMaster):
-    def do_show_dialog(self):
-        pass
-
-
 TYPE_FORM_MAPPING = {
-    SYNC_FAILURE_FATAL: ("Fatal Sync Error", "Details...", MessageDialogMaster()),
-    SYNC_FAILURE_CONNECTION: ("Connection Error", "Details...", MessageDialogMaster()),
-    SYNC_FAILURE_AUTHENTICATION: ("Authentication Error", "Options...", AuthenticationDialogMaster()),
-    SYNC_FAILURE_FINGERPRINT: ("Fingerprint Error", "Options...", FingerprintDialogMaster())
+    SYNC_FAILURE_FATAL: ("Fatal Sync Error", "Details...", FatalSyncDialog),
+    SYNC_FAILURE_CONNECTION: ("Connection Error", "Details...", ConnectionSyncDialog),
+    SYNC_FAILURE_AUTHENTICATION: ("Authentication Error", "Options...", AuthenticationSyncDialog),
+    SYNC_FAILURE_FINGERPRINT: ("Fingerprint Error", "Options...", FingerprintSyncDialog)
 }
 
 class StateHolder:
@@ -104,17 +68,10 @@ class SyncDialogsController(SubwindowInterfaceController):
         pass
 
     def error_bar_action_handler(self, button):
-        dialog = self.get_dialog()
-        dialog.show_dialog(self, self.state)
-
-    def get_dialogs_builder(self):
-        if self.dialogs_builder is None:
-            self.dialogs_builder = Gtk.Builder.new_from_file(get_ui_file("sync_dialogs"))
-        return self.dialogs_builder
-
-    def get_dialog(self):
-        _, _, dialog_master = TYPE_FORM_MAPPING[self.state.failure_type]
-        return dialog_master
+        # Dispatch and display the appropriate dialog (retrieving the appropriate instance from the view module)
+        _, _, dialog_class = TYPE_FORM_MAPPING[self.state.failure_type]
+        dialog = dialog_class.get_instance(controller=self, transient_for=self.window_object)
+        dialog.show_dialog()
 
     def handle_global_sync_action(self, sync_action, by_who):
         pass
@@ -124,34 +81,3 @@ class SyncDialogsController(SubwindowInterfaceController):
         self.state.failure_type = failure_type
         self.state.extra = extra
         self.view_activate()
-
-        return
-        ### OBSOLETE BELOW
-        # if failure_type == SYNC_FAILURE_FATAL:
-        #     message = extra
-        # elif failure_type == SYNC_FAILURE_CONNECTION:
-        #     e, sync_url = extra
-        #     message = "Could not connect to the server at {}.\n{}.".format(sync_url, e)
-        # elif failure_type == SYNC_FAILURE_AUTHENTICATION:
-        #     sync_url = ""  # TODO: pull from extras
-        #     message = "The server at {} rejected our login credentials.".format(sync_url)
-        # elif failure_type == SYNC_FAILURE_FINGERPRINT:
-        #     title = "Fingerprint Error"
-        #     e, observed_fingerprint = extra
-        #     if "SERVER_FINGERPRINT" in kv_store:
-        #         message = "The server is presenting an untrusted certificate with fingerprint {}, " \
-        #                   "which does NOT match the trusted fingerprint {}.\n" \
-        #                   "You should only trust this certificate if you are expecting a different certificate or server.\n\n" \
-        #                   "".format(observed_fingerprint, kv_store["SERVER_FINGERPRINT"])
-        #     else:
-        #         message = "The server is presenting a certificate with fingerprint {}.\n" \
-        #                   "You should only trust this certificate if you are absolutely " \
-        #                   "certain it's fingerprint matches that of your server." \
-        #                   "".format(observed_fingerprint)
-        # else:
-        #     return
-        ### OBSOOLETE ABOVE
-
-
-
-

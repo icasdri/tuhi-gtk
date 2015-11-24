@@ -17,38 +17,7 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
-    <object class="GtkMessageDialog" id="message_dialog">
-        <!--<property name="modal">true</property>-->
-        <property name="window-position">center-on-parent</property>
-        <property name="type-hint">dialog</property>
-        <property name="text">Hello World</property>
-        <property name="secondary-text">This is a test of MesssageDialog.</property>
-        <!--<child internal-child="message_area">-->
-            <!--<object class="GtkBox">-->
-                <!--<child>-->
-                    <!--<object class="GtkLabel">-->
-                        <!--<property name="label">This is a test.</property>-->
-                    <!--</object>-->
-                <!--</child>-->
-            <!--</object>-->
-        <!--</child>-->
-        <child type="action">
-            <object class="GtkButton" id="button_ok">
-                <property name="label">Ok</property>
-                <property name="can-default">True</property>
-            </object>
-        </child>
-        <action-widgets>
-            <action-widget response="ok">button_ok</action-widget>
-        </action-widgets>
-    </object>
-
-    <object class="GtkMessageDialog" id="fingerprint_dialog">
-        <property name="type-hint">dialog</property>
-
-    </object>
-
-    <object class="GtkMessageDialog" id="authentication_dialog">
+    <object class="tuhi_gtk+sync_dialogs_view+AuthenticationSyncDialog" id="authentication_sync_dialog">
         <!--<property name="modal">true</property>-->
         <property name="window-position">center-on-parent</property>
         <property name="type-hint">dialog</property>
