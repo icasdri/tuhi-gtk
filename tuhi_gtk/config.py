@@ -21,12 +21,21 @@ import os.path
 USERDATA_DIR = os.path.expanduser("~/.local/share/tuhi-gtk")
 USERCONFIG_DIR = os.path.expanduser("~/.config/tuhi-gtk")
 
+def set_directories(userdata_dir=None, userconfig_dir=None):
+    if userdata_dir is not None:
+        global USERDATA_DIR
+        USERDATA_DIR = userdata_dir
+
+    if userconfig_dir is not None:
+        global USERCONFIG_DIR
+        USERCONFIG_DIR = userconfig_dir
+
 def config_directories():
     for directory in (USERDATA_DIR, USERCONFIG_DIR):
         os.makedirs(directory, mode=0o751, exist_ok=True)  # py3 # noqa
-
-DATABASE_PATH = os.path.join(USERDATA_DIR, "tuhi_gtk_notes.db")
-DATABASE_URI = "sqlite:///" + DATABASE_PATH
+    global DATABASE_PATH, DATABASE_URI
+    DATABASE_PATH = os.path.join(USERDATA_DIR, "tuhi_gtk_notes.db")
+    DATABASE_URI = "sqlite:///" + DATABASE_PATH
 
 DATA_BASEDIR = ""
 UI_BASEDIR = os.path.join(DATA_BASEDIR, "ui")

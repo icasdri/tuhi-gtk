@@ -15,17 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from gi.repository import Gtk
-from tuhi_gtk.config import config_directories
+from tuhi_gtk.config import set_directories, config_directories
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.database import config_database
-from tuhi_gtk.global_registrar import GlobalRegistrar
-from tuhi_gtk.new_controllers.main_window_controller import MainWindowController
 
 log = get_log_for_prefix_tuple(("main",))
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        set_directories(sys.argv[1], None)
     config_directories()
+
+    from tuhi_gtk.database import config_database
+    from tuhi_gtk.global_registrar import GlobalRegistrar
+    from tuhi_gtk.new_controllers.main_window_controller import MainWindowController
     config_database()
     global_r = GlobalRegistrar()
     main_window_controller = MainWindowController(global_r)
