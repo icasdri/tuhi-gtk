@@ -46,6 +46,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="GtkImage" id="icon_sync_notes_success">
         <property name="icon_name">emblem-default-symbolic</property>
     </object>
+    <object class="GtkImage" id="icon_close">
+        <property name="icon_name">window-close-symbolic</property>
+    </object>
     <object class="GtkSpinner" id="sync_button_spinner">
 
     </object>
@@ -237,11 +240,21 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                     </packing>
                 </child>
                 <child>
-                    <object class="GtkScrolledWindow">
+                    <object class="GtkBox" id="view_box">
+                        <property name="orientation">vertical</property>
                         <child>
-                            <object class="GtkSourceView" id="source_view">
+                            <object class="GtkScrolledWindow">
+                                <child>
+                                    <object class="GtkSourceView" id="source_view">
 
+                                    </object>
+                                </child>
                             </object>
+                            <packing>
+                                <property name="pack-type">start</property>
+                                <property name="expand">true</property>
+                                <property name="fill">true</property>
+                            </packing>
                         </child>
                     </object>
                 </child>
