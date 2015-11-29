@@ -20,7 +20,7 @@ from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.util import ignore_all_args_function
+from tuhi_gtk.util import ignore_all_args_function, pref_helper_ui_get, pref_helper_ui_set
 
 log = get_log_for_prefix_tuple(("co", "prefs"))
 
@@ -93,30 +93,10 @@ class PreferencesController(SubwindowInterfaceController):
                 box.add(placeholder)
 
     def _ui_set(self, pref, val):
-        ui_object_id, setter_name, _, native_type, _ = RENDER_RELATIONSHIPS[pref]
-        target_val = native_type(val) if native_type is not None else val
-        ui_object = self.get_object(ui_object_id)
-        if setter_name.startswith("props."):
-            setattr(ui_object.props, setter_name.split(".")[1], target_val)
-        else:
-            getattr(ui_object, setter_name)(target_val)
+        pref_helper_ui_set(RENDER_RELATIONSHIPS, self, pref, val)
 
     def _ui_get(self, pref):
-        ui_object_id, _, getter_name, _, wanted_type = RENDER_RELATIONSHIPS[pref]
-        ui_object = self.get_object(ui_object_id)
-
-        sens = ui_object.get_sensitive()
-        if sens is True:
-            ui_object.set_sensitive(False)
-
-        if getter_name.startswith("props."):
-            raw_val = getattr(ui_object.props, getter_name.split(".")[1])
-        else:
-            raw_val = getattr(ui_object, getter_name)()
-
-        if sens is True:
-            ui_object.set_sensitive(True)
-        return wanted_type(raw_val) if wanted_type is not None else raw_val
+        return pref_helper_ui_get(RENDER_RELATIONSHIPS, self, pref)
 
     def init_default_preferences_in_db(self):
         log.debug("Initializing preferences with default values in database.")

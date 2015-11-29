@@ -55,5 +55,34 @@ def underscore_camelcase(camel_str):
             last_index = i
     return result + camel_str[last_index:].lower()
 
+
 def format_date(epoch_int):
     return datetime.fromtimestamp(epoch_int).strftime("%b %d, %I:%m:%S %p")
+
+
+def pref_helper_ui_set(render_relationships, builder, pref, val):
+    ui_object_id, setter_name, _, native_type, _ = render_relationships[pref]
+    target_val = native_type(val) if native_type is not None else val
+    ui_object = builder.get_object(ui_object_id)
+    if setter_name.startswith("props."):
+        setattr(ui_object.props, setter_name.split(".")[1], target_val)
+    else:
+        getattr(ui_object, setter_name)(target_val)
+
+
+def pref_helper_ui_get(render_relationships, builder, pref):
+    ui_object_id, _, getter_name, _, wanted_type = render_relationships[pref]
+    ui_object = builder.get_object(ui_object_id)
+
+    sens = ui_object.get_sensitive()
+    if sens is True:
+        ui_object.set_sensitive(False)
+
+    if getter_name.startswith("props."):
+        raw_val = getattr(ui_object.props, getter_name.split(".")[1])
+    else:
+        raw_val = getattr(ui_object, getter_name)()
+
+    if sens is True:
+        ui_object.set_sensitive(True)
+    return wanted_type(raw_val) if wanted_type is not None else raw_val
