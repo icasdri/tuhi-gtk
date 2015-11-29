@@ -30,6 +30,7 @@ class MainWindowCosmeticsController(SubwindowInterfaceController):
         log.debug("Falling back icons that are note available")
         log.debug("Keeping sizes in sync")
         self.side_hb = self.window.get_object("side_hb")
+        self.side_hb.props.width_request = self.window.get_object("hb_sizes_box").get_allocated_width()
         self._hb_synced_width = 0
         self.window.get_object("hb_sizes_box").connect("size-allocate", ignore_sender_function(self.synchronize_hb_size_callback))
 
