@@ -24,11 +24,12 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
         <child>
             <object class="GtkBox" id="note_details_popover_box">
                 <property name="orientation">vertical</property>
-                <property name="margin-top">7</property>
-                <property name="margin-bottom">7</property>
-                <property name="margin-start">7</property>
-                <property name="margin-end">7</property>
+                <property name="margin-top">8</property>
+                <property name="margin-bottom">8</property>
+                <property name="margin-start">8</property>
+                <property name="margin-end">8</property>
                 <property name="width-request">150</property>
+                <property name="spacing">2</property>
                 <child>
                     <object class="GtkBox" id="note_details_top_controls">
                         <property name="orientation">horizontal</property>
@@ -58,6 +59,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <child>
                     <object class="GtkBox">
                         <property name="orientation">horizontal</property>
+                        <style>
+                            <class name="menuitem"/>
+                        </style>
                         <child>
                             <object class="GtkImage" id="icon_date_created">
                                 <property name="icon_name">document-new-symbolic</property>
@@ -76,6 +80,9 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <child>
                     <object class="GtkBox">
                         <property name="orientation">horizontal</property>
+                        <style>
+                            <class name="menuitem"/>
+                        </style>
                         <child>
                             <object class="GtkImage" id="icon_date_modified">
                                 <property name="icon_name">document-open-recent-symbolic</property>
