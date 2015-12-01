@@ -75,5 +75,24 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 </child>
             </object>
         </child>
+        <child internal-child="action_area">
+            <object class="GtkBox">
+                <child>
+                    <object class="GtkButton" id="cancel_button">
+                        <property name="label">Cancel</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="preferences_button">
+                        <property name="label">Preferences</property>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="retry_button">
+                        <property name="label">Retry</property>
+                    </object>
+                </child>
+            </object>
+        </child>
     </object>
 </interface>
