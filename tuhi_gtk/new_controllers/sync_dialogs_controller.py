@@ -69,6 +69,7 @@ class SyncDialogsController(SubwindowInterfaceController):
 
     def error_bar_action_handler(self, button):
         # Dispatch and display the appropriate dialog (retrieving the appropriate instance from the view module)
+        self.get_object("error_bar").hide()
         _, _, dialog_class = TYPE_FORM_MAPPING[self.state.failure_type]
         dialog = dialog_class.get_instance(controller=self, transient_for=self.window_object)
         dialog.show_dialog()
