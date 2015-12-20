@@ -16,9 +16,10 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
-from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.util import hide_window_on_delete
+from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.database import kv_store
+from tuhi_gtk.util import hide_window_on_delete, populate_rendered_view_from, save_rendered_view_to
 
 log = get_log_for_prefix_tuple(("ui", "sync_dialogs"))
 
@@ -49,6 +50,14 @@ class SyncDialog(Gtk.MessageDialog):
 class AuthenticationSyncDialog(SyncDialog):
     ui_builder_file_name = "dialog_authentication"
     built_root_name = "authentication_sync_dialog"
+    render_relationships = {
+        "SYNCSERVER_USERNAME": ("sync_username_entry", "set_text", "get_text", None, None),
+        "SYNCSERVER_PASSWORD": ("sync_password_entry", "set_text", "get_text", None, None)
+    }
+
+    def show_dialog(self):
+        populate_rendered_view_from(kv_store, self.render_relationships, self.builder)
+        self.show_all()
 
 
 class ConnectionSyncDialog(SyncDialog):
