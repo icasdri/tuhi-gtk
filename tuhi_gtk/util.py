@@ -86,3 +86,16 @@ def pref_helper_ui_get(render_relationships, builder, pref):
     if sens is True:
         ui_object.set_sensitive(True)
     return wanted_type(raw_val) if wanted_type is not None else raw_val
+
+
+def populate_rendered_view_from(db, render_relationships, builder):
+    for pref in render_relationships:
+        pref_helper_ui_set(render_relationships, builder, pref, db[pref])
+
+
+def save_rendered_view_to(db, render_relationships, builder, global_r=None):
+    for pref in render_relationships:
+        db[pref] = pref_helper_ui_get(render_relationships, builder, pref)
+    if global_r is not None:
+        for pref in render_relationships:
+            global_r.emit("preference_changed", pref)

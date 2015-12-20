@@ -20,7 +20,7 @@ from tuhi_gtk.new_controllers import SubwindowInterfaceController
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.util import ignore_all_args_function, pref_helper_ui_get, pref_helper_ui_set
+from tuhi_gtk.util import ignore_all_args_function, populate_rendered_view_from, save_rendered_view_to
 
 log = get_log_for_prefix_tuple(("co", "prefs"))
 
@@ -92,12 +92,6 @@ class PreferencesController(SubwindowInterfaceController):
             if not first_call:
                 box.add(placeholder)
 
-    def _ui_set(self, pref, val):
-        pref_helper_ui_set(RENDER_RELATIONSHIPS, self, pref, val)
-
-    def _ui_get(self, pref):
-        return pref_helper_ui_get(RENDER_RELATIONSHIPS, self, pref)
-
     def init_default_preferences_in_db(self):
         log.debug("Initializing preferences with default values in database.")
         for pref_name in DEFAULT_PREFERENCES_VALUES:
@@ -107,13 +101,9 @@ class PreferencesController(SubwindowInterfaceController):
 
     def populate_preferences_from_db(self):
         log.debug("Populating preferences from database.")
-        for pref in RENDER_RELATIONSHIPS:
-            self._ui_set(pref, kv_store[pref])
+        populate_rendered_view_from(kv_store, RENDER_RELATIONSHIPS, self.builder)
         self.editor_use_custom_font_switch_toggled(None, None, first_call=True)
 
     def save_preferences_to_db(self):
         log.debug("Saving preferences to database.")
-        for pref in RENDER_RELATIONSHIPS:
-            kv_store[pref] = self._ui_get(pref)
-        for pref in RENDER_RELATIONSHIPS:
-            self.global_r.emit("preference_changed", pref)
+        save_rendered_view_to(kv_store, RENDER_RELATIONSHIPS, self.builder, global_r=self.global_r)
