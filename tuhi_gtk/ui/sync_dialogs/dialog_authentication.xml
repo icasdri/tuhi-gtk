@@ -81,16 +81,19 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
                 <child>
                     <object class="GtkButton" id="cancel_button">
                         <property name="label">Cancel</property>
+                        <signal name="clicked" handler="cancel_button_clicked"/>
                     </object>
                 </child>
                 <child>
                     <object class="GtkButton" id="preferences_button">
                         <property name="label">Preferences</property>
+                        <signal name="clicked" handler="preferences_button_clicked"/>
                     </object>
                 </child>
                 <child>
                     <object class="GtkButton" id="retry_button">
                         <property name="label">Retry</property>
+                        <signal name="clicked" handler="retry_button_clicked"/>
                     </object>
                 </child>
             </object>
