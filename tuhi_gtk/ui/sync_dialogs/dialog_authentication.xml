@@ -20,6 +20,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
     <object class="tuhi_gtk+sync_dialogs_view+AuthenticationSyncDialog" id="authentication_sync_dialog">
         <!--<property name="modal">true</property>-->
         <property name="window-position">center-on-parent</property>
+        <property name="modal">true</property>
         <property name="type-hint">dialog</property>
         <property name="text">Authentication Error</property>
         <property name="secondary-text">The server rejected our login credentials. Please review the below (or in Preferences) and retry sync.</property>
