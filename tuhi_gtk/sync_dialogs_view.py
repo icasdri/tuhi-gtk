@@ -17,7 +17,7 @@
 
 from gi.repository import Gtk
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.config import get_ui_file
+from tuhi_gtk.config import get_ui_file, SYNC_BY_USER
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.util import hide_window_on_delete, populate_rendered_view_from, save_rendered_view_to
 
@@ -55,9 +55,26 @@ class AuthenticationSyncDialog(SyncDialog):
         "SYNCSERVER_PASSWORD": ("sync_password_entry", "set_text", "get_text", None, None)
     }
 
+    def initialize(self, controller):
+        self.controller = controller
+
     def show_dialog(self):
         populate_rendered_view_from(kv_store, self.render_relationships, self.builder)
+        self.builder.connect_signals(self)
         self.show_all()
+
+    def cancel_button_clicked(self, _):
+        self.hide()
+
+    def preferences_button_clicked(self, _):
+        self.hide()
+        self.controller.window.get_controller("preferences").view_activate()
+
+    def retry_button_clicked(self, _):
+        save_rendered_view_to(kv_store, self.render_relationships, self.builder, global_r=self.controller.global_r)
+        self.hide()
+        # TODO: call the sync logic to actually perform the retry
+        # self.controller.global_r.sync_control.sync(SYNC_BY_USER)
 
 
 class ConnectionSyncDialog(SyncDialog):
