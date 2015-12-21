@@ -94,6 +94,20 @@ class SyncControl(GObject.Object):
         return False
 
     def _post_pull_comm(self, r):
+        if r.status_code in (400, 500):  # Bad Request and Server Error
+            log.critical("Server responded with HTTP %s", r.status_code)
+            self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+            self.emit("sync_failure", SYNC_FAILURE_FATAL, self.by_who, "Server responded with HTTP {}".format(r.status_code))
+            self.sync_lock.release()
+            return
+
+        if r.status_code == 401:  # Unauthorized
+            log.error("Could not pull from server due to an authentication issue. Server responded with HTTP 401.")
+            self.emit("global_sync_action", SYNC_ACTION_FAILURE, self.by_who)
+            self.emit("sync_failure", SYNC_FAILURE_AUTHENTICATION, self.by_who, None)
+            self.sync_lock.release()
+            return
+
         try:
             data = r.json()
         except ValueError:
