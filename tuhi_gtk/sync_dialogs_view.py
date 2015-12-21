@@ -68,8 +68,7 @@ class PrefBasedSyncDialog(SyncDialog):
     def retry_button_clicked(self, _):
         save_rendered_view_to(kv_store, self.render_relationships, self.builder, global_r=self.controller.global_r)
         self.hide()
-        # TODO: call the sync logic to actually perform the retry
-        # self.controller.global_r.sync_control.sync(SYNC_BY_USER)
+        self.controller.global_r.sync_control.sync(SYNC_BY_USER)
 
 
 class AuthenticationSyncDialog(PrefBasedSyncDialog):
@@ -108,8 +107,7 @@ class FatalSyncDialog(SyncDialog):
 
     def retry_button_clicked(self, _):
         self.hide()
-        # TODO: call the sync logic to actually perform the retry
-        # self.controller.global_r.sync_control.sync(SYNC_BY_USER)
+        self.controller.global_r.sync_control.sync(SYNC_BY_USER)
 
 
 class FingerprintSyncDialog(SyncDialog):

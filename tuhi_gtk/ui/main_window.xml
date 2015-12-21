@@ -41,7 +41,7 @@ along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
         <property name="icon_name">emblem-synchronizing-symbolic</property>
     </object>
     <object class="GtkImage" id="icon_sync_notes_failed">
-        <property name="icon_name">network-error-symbolic</property>
+        <property name="icon_name">dialog-error</property>
     </object>
     <object class="GtkImage" id="icon_sync_notes_success">
         <property name="icon_name">emblem-default-symbolic</property>
