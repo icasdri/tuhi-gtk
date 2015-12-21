@@ -47,13 +47,8 @@ class SyncDialog(Gtk.MessageDialog):
         return cls.instance
 
 
-class AuthenticationSyncDialog(SyncDialog):
-    ui_builder_file_name = "dialog_authentication"
-    built_root_name = "authentication_sync_dialog"
-    render_relationships = {
-        "SYNCSERVER_USERNAME": ("sync_username_entry", "set_text", "get_text", None, None),
-        "SYNCSERVER_PASSWORD": ("sync_password_entry", "set_text", "get_text", None, None)
-    }
+class PrefBasedSyncDialog(SyncDialog):
+    render_relationships = None # need to be set by subclasses
 
     def initialize(self, controller):
         self.controller = controller
@@ -77,14 +72,44 @@ class AuthenticationSyncDialog(SyncDialog):
         # self.controller.global_r.sync_control.sync(SYNC_BY_USER)
 
 
-class ConnectionSyncDialog(SyncDialog):
+class AuthenticationSyncDialog(PrefBasedSyncDialog):
+    ui_builder_file_name = "dialog_authentication"
+    built_root_name = "authentication_sync_dialog"
+    render_relationships = {
+        "SYNCSERVER_USERNAME": ("sync_username_entry", "set_text", "get_text", None, None),
+        "SYNCSERVER_PASSWORD": ("sync_password_entry", "set_text", "get_text", None, None)
+    }
+
+
+class ConnectionSyncDialog(PrefBasedSyncDialog):
     ui_builder_file_name = "dialog_connection"
     built_root_name = "connection_sync_dialog"
+    render_relationships = {
+        "SYNCSERVER_URL": ("sync_url_entry", "set_text", "get_text", None, None)
+    }
 
 
 class FatalSyncDialog(SyncDialog):
     ui_builder_file_name = "dialog_fatal"
     built_root_name = "fatal_sync_dialog"
+
+    def initialize(self, controller):
+        self.message_text = "The following fatal error was encountered during sync:\n\n{}'{}'\n\n{}".format(
+            6*" ", controller.state.extra,
+            "This is likely a bug or an issue with the sync server's configuration. Please retry sync.")
+
+    def show_dialog(self):
+        self.builder.connect_signals(self)
+        self.props.secondary_text = self.message_text
+        self.show_all()
+
+    def close_button_clicked(self, _):
+        self.hide()
+
+    def retry_button_clicked(self, _):
+        self.hide()
+        # TODO: call the sync logic to actually perform the retry
+        # self.controller.global_r.sync_control.sync(SYNC_BY_USER)
 
 
 class FingerprintSyncDialog(SyncDialog):

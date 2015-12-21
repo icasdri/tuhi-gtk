@@ -17,5 +17,26 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
-
+    <object class="tuhi_gtk+sync_dialogs_view+FatalSyncDialog" id="fatal_sync_dialog">
+        <property name="window-position">center-on-parent</property>
+        <property name="modal">true</property>
+        <property name="type-hint">dialog</property>
+        <property name="text">Fatal Error</property>
+        <child internal-child="action_area">
+            <object class="GtkBox">
+                <child>
+                    <object class="GtkButton" id="close_button">
+                        <property name="label">Close</property>
+                        <signal name="clicked" handler="close_button_clicked"/>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="retry_button">
+                        <property name="label">Retry Sync</property>
+                        <signal name="clicked" handler="retry_button_clicked"/>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
 </interface>

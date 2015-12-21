@@ -17,5 +17,64 @@ You should have received a copy of the GNU General Public License
 along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <interface>
+    <object class="tuhi_gtk+sync_dialogs_view+ConnectionSyncDialog" id="connection_sync_dialog">
+        <property name="window-position">center-on-parent</property>
+        <property name="modal">true</property>
+        <property name="type-hint">dialog</property>
+        <property name="text">Connection Error</property>
+        <property name="secondary-text">Could not connect to the server. Please check your network connection and the sync server URL below (or in Preferences) and retry sync.</property>
+        <child internal-child="message_area">
+            <object class="GtkBox">
+                <child>
+                    <object class="GtkGrid">
+                        <property name="column-spacing">8</property>
+                        <property name="row-spacing">8</property>
+                        <property name="column-homogeneous">true</property>
+                        <child>
+                            <object class="GtkLabel">
+                                <property name="label">Sync Server URL</property>
+                                <property name="xalign">1</property>
+                            </object>
+                            <packing>
+                                <property name="left-attach">0</property>
+                                <property name="top-attach">0</property>
+                            </packing>
+                        </child>
+                        <child>
+                            <object class="GtkEntry" id="sync_url_entry">
 
+                            </object>
+                            <packing>
+                                <property name="left-attach">1</property>
+                                <property name="top-attach">0</property>
+                                <property name="width">2</property>
+                            </packing>
+                        </child>
+                    </object>
+                </child>
+            </object>
+        </child>
+        <child internal-child="action_area">
+            <object class="GtkBox">
+                <child>
+                    <object class="GtkButton" id="cancel_button">
+                        <property name="label">Cancel</property>
+                        <signal name="clicked" handler="cancel_button_clicked"/>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="preferences_button">
+                        <property name="label">Preferences</property>
+                        <signal name="clicked" handler="preferences_button_clicked"/>
+                    </object>
+                </child>
+                <child>
+                    <object class="GtkButton" id="retry_button">
+                        <property name="label">Retry</property>
+                        <signal name="clicked" handler="retry_button_clicked"/>
+                    </object>
+                </child>
+            </object>
+        </child>
+    </object>
 </interface>
