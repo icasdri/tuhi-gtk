@@ -65,6 +65,7 @@ class SyncControl(GObject.Object):
         except KeyError:
             after = None
 
+        self.session = requests.Session()
         pull_thread = threading.Thread(target=self._pull_comm, args=(after,))
         pull_thread.start()
 
@@ -77,7 +78,7 @@ class SyncControl(GObject.Object):
 
         try:
             log.debug("Connecting to server for GET.")
-            r = requests.get(self.sync_url, params=params, auth=self.auth)
+            r = self.session.get(self.sync_url, params=params, auth=self.auth)
         except requests.exceptions.ConnectionError as e:
             log.error("ConnectionError: %s", e)
             e_ = e  # Avoid reference-before-assignment error
@@ -177,7 +178,7 @@ class SyncControl(GObject.Object):
         log.debug("Executing push thread.")
         try:
             log.debug("Connecting to server for POST.")
-            r = requests.post(self.sync_url, data, auth=self.auth)
+            r = self.session.post(self.sync_url, data, auth=self.auth)
         except requests.exceptions.ConnectionError as e:
             # TODO: Actual error handling logic for service unavailable, wrong network, etc.
             log.error("ConnectionError: %s", e)
