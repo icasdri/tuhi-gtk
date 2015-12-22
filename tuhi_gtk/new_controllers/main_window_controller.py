@@ -38,7 +38,8 @@ class MainWindowController(WindowController):
             "NewNoteController",
             "SyncButtonController",
             "PreferencesController",
-            "TrashController"
+            "TrashController",
+            "SyncDialogsController"
         ])
 
     def do_first_view_activate(self):
