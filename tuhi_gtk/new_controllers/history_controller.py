@@ -38,6 +38,7 @@ class HistoryController(SubwindowInterfaceController, PopoverControllerMixin):
 
     def do_first_view_activate(self):
         self.init_popover()
+        self.popover.connect("closed", ignore_all_args_function(self.handle_history_popover_closed))
         self.builder.connect_signals(self)
 
     def do_view_activate(self):
@@ -49,3 +50,5 @@ class HistoryController(SubwindowInterfaceController, PopoverControllerMixin):
     def current_note_changed(self, note):
         self.popover_toggle_button.set_sensitive(note is not None)
 
+    def handle_history_popover_closed(self):
+        self.window.get_controller("history_content_list").select_item(None)
