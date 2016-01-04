@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -16,25 +16,27 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
+from tuhi_gtk.config import REASON_USER
 from tuhi_gtk.util import ignore_all_args_function
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
-from tuhi_gtk.new_controllers.popover_controller_mixin import PopoverControllerMixin
+from tuhi_gtk.database import Note, db_session
+from tuhi_gtk.controllers import SubwindowInterfaceController
 
-log = get_log_for_prefix_tuple(("co", "opts_p"))
+log = get_log_for_prefix_tuple(("co", "new_note"))
 
-class OptionsPopoverController(SubwindowInterfaceController, PopoverControllerMixin):
+class NewNoteController(SubwindowInterfaceController):
     def do_init(self):
-        self.window.register_controller("options_popover", self)
-        PopoverControllerMixin.__init__(self, self.window, "options_popover_toggle_button", "options_popover")
+        self.window.register_controller("new_note", self)
         self.window.connect("view-activated", ignore_all_args_function(self.init_after_window_activate))
 
     def init_after_window_activate(self):
-        self.connect_popover_toggle_button()
-
-    def do_first_view_activate(self):
-        self.init_popover()
-        self.builder.connect_signals(self)
+        self.new_note_button = self.window.get_object("new_note_button")
+        self.new_note_button.connect("clicked", ignore_all_args_function(self.view_activate))
 
     def do_view_activate(self):
-        self.show_popover()
+        log.debug("New note logic activated")
+        note = Note(title="New Note")
+        db_session.add(note)
+        db_session.commit()
+        self.global_r.emit("note_added", note, REASON_USER)
+        self.window.current_note = note
 

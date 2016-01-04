@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -19,7 +19,7 @@ from gi.repository import GObject, Gtk, GtkSource
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.util import ignore_all_args_function
-from tuhi_gtk.new_controllers import WindowController
+from tuhi_gtk.controllers import WindowController
 
 log = get_log_for_prefix_tuple(("w", "main"))
 

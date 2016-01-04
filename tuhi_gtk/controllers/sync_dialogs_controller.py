@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -21,7 +21,7 @@ from tuhi_gtk.config import get_ui_file, SYNC_FAILURE_FATAL, SYNC_FAILURE_CONNEC
     SYNC_FAILURE_AUTHENTICATION, SYNC_FAILURE_FINGERPRINT
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.controllers import SubwindowInterfaceController
 from tuhi_gtk.sync_dialogs_view import AuthenticationSyncDialog, ConnectionSyncDialog, FatalSyncDialog, FingerprintSyncDialog
 
 log = get_log_for_prefix_tuple(("co", "sync_dialogs"))

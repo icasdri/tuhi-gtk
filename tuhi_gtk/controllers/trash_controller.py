@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -17,10 +17,10 @@
 
 from gi.repository import Gtk, GObject
 from tuhi_gtk.database import Note, NC_TYPE_PERMA_DELETE
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.controllers import SubwindowInterfaceController
 from tuhi_gtk.config import get_ui_file, REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
-from tuhi_gtk.new_controllers.tree_list_store_controller_mixin import TreeListStoreControllerMixin
+from tuhi_gtk.controllers.tree_list_store_controller_mixin import TreeListStoreControllerMixin
 from tuhi_gtk.util import ignore_all_args_function, format_date, ignore_sender_function, property_change_function
 
 log = get_log_for_prefix_tuple(("co", "trash"))

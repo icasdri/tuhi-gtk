@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -20,7 +20,7 @@ from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.config import SYNC_ACTION_BEGIN, SYNC_ACTION_SUCCESS, SYNC_ACTION_FAILURE, EMBLEM_SHOW_TIMEOUT, \
     SYNC_BY_USER
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.controllers import SubwindowInterfaceController
 from tuhi_gtk.feature_view_mixin import FeatureViewMixin
 
 log = get_log_for_prefix_tuple(("co", "sync_button"))

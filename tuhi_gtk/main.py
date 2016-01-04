@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     from tuhi_gtk.database import config_database
     from tuhi_gtk.global_registrar import GlobalRegistrar
-    from tuhi_gtk.new_controllers.main_window_controller import MainWindowController
+    from tuhi_gtk.controllers.main_window_controller import MainWindowController
     config_database()
     global_r = GlobalRegistrar()
     main_window_controller = MainWindowController(global_r)

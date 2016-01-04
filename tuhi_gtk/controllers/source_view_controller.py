@@ -20,7 +20,7 @@ from tuhi_gtk.config import BUFFER_ACTIVITY_CHECKERS_RESOLUTION, REASON_USER
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import property_change_function, ignore_all_args_function, format_date
 from tuhi_gtk.database import db_session, NoteContent, kv_store, NC_TYPE_PLAIN
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.controllers import SubwindowInterfaceController
 
 log = get_log_for_prefix_tuple(("co", "srcview"))
 

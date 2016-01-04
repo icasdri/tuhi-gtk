@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -20,9 +20,9 @@ from tuhi_gtk.config import REASON_SYNC, \
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
 from tuhi_gtk.util import ignore_all_args_function, ignore_sender_function, property_change_function
 from tuhi_gtk.database import note_notonserver_tracker, note_content_notonserver_tracker, kv_store, Note
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.controllers import SubwindowInterfaceController
 from tuhi_gtk.note_row_view import NoteRow
-from tuhi_gtk.new_controllers.list_controller_mixin import ListControllerMixin
+from tuhi_gtk.controllers.list_controller_mixin import ListControllerMixin
 
 log = get_log_for_prefix_tuple(("co", "note_l"))
 

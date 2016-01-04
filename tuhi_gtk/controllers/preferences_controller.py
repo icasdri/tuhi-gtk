@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -16,7 +16,7 @@
 # along with tuhi-gtk.  If not, see <http://www.gnu.org/licenses/>.
 
 from gi.repository import Gtk
-from tuhi_gtk.new_controllers import SubwindowInterfaceController
+from tuhi_gtk.controllers import SubwindowInterfaceController
 from tuhi_gtk.database import kv_store
 from tuhi_gtk.config import get_ui_file
 from tuhi_gtk.app_logging import get_log_for_prefix_tuple
