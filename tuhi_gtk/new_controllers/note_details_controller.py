@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -40,10 +40,12 @@ class NoteDetailsController(SubwindowInterfaceController, PopoverControllerMixin
         self.get_object("delete_current_note_button").connect("clicked", ignore_all_args_function(self.delete_current_note))
 
     def do_view_activate(self):
+        log.debug("Explictly calling source_view_controller->save_current_note()")
         self.window.get_controller("source_view").save_current_note()
         current_note = self.window.current_note
         self.get_object("date_created_label").set_text(format_date(current_note.date_created))
         self.get_object("date_modified_label").set_text(format_date(current_note.date_content_modified))
+        log.debug("Activating note details popover")
         self.show_popover()
 
     def current_note_changed(self, note):

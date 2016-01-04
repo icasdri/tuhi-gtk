@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -41,7 +41,9 @@ class HistoryController(SubwindowInterfaceController, PopoverControllerMixin):
         self.builder.connect_signals(self)
 
     def do_view_activate(self):
+        log.debug("Explictly calling source_view_controller->save_current_note()")
         self.window.get_controller("source_view").save_current_note()
+        log.debug("Activating history popover, btw, window.current_note_content is (%s)", self.window.current_note_content.note_content_id)
         self.show_popover()
 
     def current_note_changed(self, note):

@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -61,7 +61,7 @@ class SourceViewController(SubwindowInterfaceController):
             self.source_view.hide()
             return
 
-        log.debug("Activating Note: (%s) '%s'", note.note_id, note.title)
+        log.debug("Activating Note: N(%s)", note.note_id)
         self.current_note = note
 
         if self.checker_id is None:
@@ -75,7 +75,7 @@ class SourceViewController(SubwindowInterfaceController):
         if content is not None and content == self.current_note_content:
             return
 
-        log.debug("Activating Note Content: %s", content.note_content_id if content is not None else "None")
+        log.debug("Activating Note Content: (%s)", content.note_content_id if content is not None else "None")
         self.current_note_content = content
 
         self.current_buffer = GtkSource.Buffer()
@@ -139,12 +139,14 @@ class SourceViewController(SubwindowInterfaceController):
         new_data = self.current_buffer.props.text if self.current_buffer is not None else ""
 
         if new_data != old_data:
-            log.info("Saving note: (%s) '%s'", note.note_id, note.title)
+            log.info("Saving note: (%s)", note.note_id)
             new_content = NoteContent(note=note, data=new_data, type=NC_TYPE_PLAIN)
             db_session.add(new_content)
             db_session.commit()
 
+            log.debug("Setting internal current_note_content to the one that was just saved (%s)", new_content.note_content_id)
             self.current_note_content = new_content
+            log.debug("Setting window.current_note_content to the one that was just saved (%s)", new_content.note_content_id)
+            self.window.current_note_content = new_content
             self.global_r.emit("note_content_added", self.current_note_content, REASON_USER)
-            self.window.current_note_content = self.current_note_content
             # self.global_r.emit("note-saved", note)

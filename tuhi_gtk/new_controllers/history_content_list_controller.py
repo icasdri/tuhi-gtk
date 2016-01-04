@@ -1,4 +1,4 @@
-# Copyright 2015 icasdri
+# Copyright 2015-2016 icasdri
 #
 # This file is part of tuhi-gtk.
 #
@@ -68,7 +68,9 @@ class HistoryContentListController(SubwindowInterfaceController, ListControllerM
             self.selection_signal_listener_id = self.list.connect("row-selected", ignore_sender_function(self.row_selected_callback))
 
     def do_view_activate(self):
-        self.select_item(self.window.current_note_content)
+        content = self.window.current_note_content
+        log.debug("Selecting window.current_note_content (%s)", content.note_content_id)
+        self.select_item(content)
 
     def handle_new_note_content(self, note_content, _):
         if self.list is not None:
