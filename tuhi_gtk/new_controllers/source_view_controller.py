@@ -42,6 +42,9 @@ class SourceViewController(SubwindowInterfaceController):
         self.inactivity_count = 0
         self.activity_count = 0
         self.current_buffer = None
+
+        self.activate_note(None)
+
         self.window.connect("notify::current-note", property_change_function(self.activate_note))
         self.window.connect("notify::current-note-content", property_change_function(self.activate_note_content))
 
